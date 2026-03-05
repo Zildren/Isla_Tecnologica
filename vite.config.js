@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: 'https://Zildren.github.io/Isla_Tecnologica',
+  
   server: {
     proxy: {
       '/api': 'http://localhost:8080' // La dirección donde correrá tu Java
