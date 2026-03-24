@@ -5,23 +5,25 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Data // Esto genera automáticamente los Getters y Setters
+@Data
 public class Producto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String codigo; // El código para identificación rápida que pediste
+    private String codigo;
 
-    private String nombre; // Fundas, micas, cargadores, etc.
+    private String nombre;
     private Integer stock;
-    private Double precioCompra; // Para calcular tus gastos
-    private Double precioVenta;  // Para calcular tus ganancias
+    private Double precioCompra;
+    private Double precioVenta;
     private String categoria;
 
-    // Campos para el control total: quién, fecha y hora
-    private String registradoPorMatricula; 
+    @Column(columnDefinition = "LONGTEXT")
+    private String imagen;
+
+    private String registradoPorMatricula;
     private LocalDateTime fechaRegistro;
 
     @PrePersist

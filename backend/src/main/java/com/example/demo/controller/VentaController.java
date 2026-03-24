@@ -76,4 +76,19 @@ public class VentaController {
             return ResponseEntity.internalServerError().body("Error en el servidor: " + e.getMessage());
         }
     }
+
+    // ── ELIMINAR VENTA (solo accesible para ADMIN desde el frontend) ──
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> eliminarVenta(@PathVariable Long id) {
+        try {
+            if (!ventaRepository.existsById(id)) {
+                return ResponseEntity.notFound().build();
+            }
+            ventaRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            System.err.println(">>> [ERROR al eliminar venta] " + e.getMessage());
+            return ResponseEntity.internalServerError().body("Error al eliminar la venta: " + e.getMessage());
+        }
+    }
 }
