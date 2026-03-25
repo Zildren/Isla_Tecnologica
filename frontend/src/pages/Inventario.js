@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { obtenerProductos, guardarProducto } from '../services/productoService';
 import { obtenerVentas, registrarVenta } from '../services/ventaService';
+import { obtenerUsuarios, agregarUsuario, toggleBloqueoUsuario, eliminarUsuario } from '../services/usuarioService';
 import './Inventario.css';
 
 
@@ -367,7 +368,7 @@ const Inventario = () => {
   const eliminarProducto = async (p) => {
     if (!window.confirm(`¿Eliminar el producto "${p.nombre}"?\nEsta acción no se puede deshacer.`)) return;
     try {
-      const res = await fetch(`http://localhost:8080/api/productos/${p.id}`, {
+      const res = await fetch(`/api/productos/${p.id}`, {
         method: 'DELETE', headers: { 'Content-Type': 'application/json' }
       });
       if (res.ok || res.status === 204 || res.status === 200) {
