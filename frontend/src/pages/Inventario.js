@@ -386,15 +386,24 @@
     const abrirAgregarStock = (p) => { setModalAgregarStock(p); setCantidadAgregar(''); };
 
     const eliminarProducto = async (p) => {
-  if (!window.confirm(`¿Eliminar "${p.nombre}"?`)) return;
+  if (!window.confirm(`¿Eliminar el producto "${p.nombre}"?\nEsta acción no se puede deshacer.`)) return;
   try {
     const res = await fetch(`${API_URL}/api/productos/${p.id}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
     });
-    // ... resto del código igual
+    if (res.ok || res.status === 204 || res.status === 200) {
+      setProductos(prev => prev.filter(x => x.id !== p.id));
+      alert(`✅ Producto "${p.nombre}" eliminado`);
+    } else if (res.status === 404) {
+      alert('❌ Producto no encontrado en el servidor');
+    } else if (res.status === 405) {
+      alert('❌ El backend no tiene el endpoint DELETE habilitado.');
+    } else {
+      alert(`❌ Error del servidor: ${res.status}`);
+    }
   } catch(e) {
-    alert('❌ No se pudo conectar al backend. Verifica que esté corriendo en el puerto 8080.');
+    alert('❌ No se pudo conectar al backend.');
   }
 };
 
