@@ -388,7 +388,7 @@
     const eliminarProducto = async (p) => {
   if (!window.confirm(`¿Eliminar el producto "${p.nombre}"?\nEsta acción no se puede deshacer.`)) return;
   try {
-    const res = await fetch(`${API_URL}/api/productos/${p.id}`, {
+    const res = await fetch(`/api/productos/${p.id}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
     });
