@@ -11,7 +11,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/usuarios")
 // 🟢 PERMITE LA CONEXIÓN DESDE REACT (Evita el error de CORS)
-@CrossOrigin(origins = "*") 
+@CrossOrigin(origins = "http://localhost:3000") 
 public class UsuarioController {
 
     @Autowired
