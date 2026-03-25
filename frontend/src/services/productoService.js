@@ -1,9 +1,10 @@
-const BASE_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = process.env.REACT_APP_API_URL;
 
-// ✅ Endpoint correcto (OJO: productos en plural)
+// ✅ Endpoint correcto (productos en plural)
 const API_URL = `${BASE_URL}/api/productos`;
 
-// 🔍 DEBUG (puedes quitarlo luego)
+// 🔍 DEBUG (verifica que NO sea undefined)
+console.log("BASE_URL:", BASE_URL);
 console.log("API_URL:", API_URL);
 
 // ✅ Obtener productos

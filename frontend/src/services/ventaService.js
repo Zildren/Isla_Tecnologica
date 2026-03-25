@@ -1,7 +1,8 @@
-const BASE_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = process.env.REACT_APP_API_URL;
 const API_URL = `${BASE_URL}/api/ventas`;
 
-// 🔍 Debug (puedes quitarlo luego)
+// 🔍 Debug (muy importante para verificar)
+console.log("BASE_URL:", BASE_URL);
 console.log("Ventas API:", API_URL);
 
 // ✅ Registrar venta
