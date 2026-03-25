@@ -1,5 +1,5 @@
-// Ruta relativa para que funcione en Railway y local
-const API_URL = "/api/auth/login"; 
+// Es mejor usar una variable de entorno o la URL completa de Railway si el backend es independiente
+const API_URL = "https://tu-backend-en-railway.app/api/auth/login"; 
 
 export const loginUsuario = async (matricula, password) => {
     try {
@@ -9,14 +9,18 @@ export const loginUsuario = async (matricula, password) => {
             body: JSON.stringify({ matricula, password })
         });
 
-        // Verificamos si la respuesta es un JSON válido
-        const data = await response.json();
-        
-        // Retorna el objeto { status, rol } que envía tu Java
-        return data;
+        // 1. Verificamos si la respuesta es exitosa antes de parsear JSON
+        if (!response.ok) {
+            const errorText = await response.text(); // Captura el "Invalid CORS request"
+            console.error("Error del servidor:", errorText);
+            return { status: "ERROR_SERVIDOR", detalles: errorText };
+        }
+
+        // 2. Si llegamos aquí, el JSON es seguro de leer
+        return await response.json();
 
     } catch (error) {
-        console.error("Error en conexión:", error);
+        console.error("Error de red/conexión:", error);
         return { status: "ERROR_CONEXION", rol: "" };
     }
 };
