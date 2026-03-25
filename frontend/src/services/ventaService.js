@@ -1,7 +1,8 @@
-//const API_URL = "http://localhost:8080/api/ventas";
-const API_URL = "/api/ventas";
+// ✅ Detecta automáticamente el dominio (Railway o Local)
+const API_BASE = window.location.origin;
+const API_URL = `${API_BASE}/api/ventas`;
 
-// ✅ Función para guardar nuevas ventas (La que ya tenías)
+// ✅ Función para guardar nuevas ventas
 export const registrarVenta = async (datosVenta) => {
     try {
         const response = await fetch(API_URL, {
@@ -11,8 +12,9 @@ export const registrarVenta = async (datosVenta) => {
         });
         
         if (!response.ok) {
-            const errorData = await response.json();
-            console.error("Error del servidor:", errorData);
+            // Intentamos leer el error como texto por si no es JSON
+            const errorText = await response.text();
+            console.error("Error del servidor:", errorText);
             return null;
         }
         
@@ -23,18 +25,19 @@ export const registrarVenta = async (datosVenta) => {
     }
 };
 
-// ✅ NUEVA FUNCIÓN: Para el reporte de ganancias y estadísticas
+// ✅ Función para el reporte de ganancias y estadísticas
 export const obtenerVentas = async () => {
     try {
-        const response = await fetch(API_URL); // Llama al @GetMapping del Backend
+        const response = await fetch(API_URL);
         
         if (!response.ok) {
-            throw new Error("No se pudieron recuperar las ventas del servidor");
+            const errorText = await response.text();
+            throw new Error(errorText);
         }
         
-        return await response.json(); // Retorna la lista de todas las ventas para filtrar en React
+        return await response.json(); 
     } catch (error) {
         console.error("Error al obtener el historial de ventas:", error);
-        return []; // Retorna un arreglo vacío para que la tabla no rompa la app
+        return []; 
     }
 };
