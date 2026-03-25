@@ -1,5 +1,5 @@
-// const API_URL = "http://localhost:8080/api/auth/login";
-const API_URL = "/api/auth/login";
+// Ruta relativa para que funcione en Railway y local
+const API_URL = "/api/auth/login"; 
 
 export const loginUsuario = async (matricula, password) => {
     try {
@@ -9,9 +9,10 @@ export const loginUsuario = async (matricula, password) => {
             body: JSON.stringify({ matricula, password })
         });
 
+        // Verificamos si la respuesta es un JSON válido
         const data = await response.json();
         
-        // ✅ Ahora regresa el objeto completo { status, rol }
+        // Retorna el objeto { status, rol } que envía tu Java
         return data;
 
     } catch (error) {
