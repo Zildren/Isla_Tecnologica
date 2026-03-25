@@ -1,12 +1,12 @@
 // src/services/authService.js
 
-// Base URL desde variables de entorno (Railway)
+// 🔥 URL del backend desde Railway
 const BASE_URL = process.env.REACT_APP_API_URL;
 
 // Endpoint completo
 const API_URL = `${BASE_URL}/api/auth/login`;
 
-// 🔍 Debug (puedes eliminarlos después)
+// Debug
 console.log("🌐 BASE_URL:", BASE_URL);
 console.log("🔗 API_URL:", API_URL);
 
