@@ -3,8 +3,6 @@
   import { obtenerProductos, guardarProducto } from '../services/productoService';
   import { obtenerVentas, registrarVenta } from '../services/ventaService';
   import './Inventario.css';
-  import API_URL from '../config';
-
 
   // ═══════════════════════════════════════════
   // GRÁFICA DE ÁREA SVG (sin dependencias)
