@@ -337,12 +337,31 @@ const Inventario = () => {
   );
 
   const handleGuardar = async (e) => {
-    e.preventDefault(); if (!esAdmin) return;
-    await guardarProducto({ ...nuevoProd, id: editandoId, registradoPorMatricula: matricula });
+  e.preventDefault();
+  if (!esAdmin) return;
+
+  try {
+    const resultado = await guardarProducto({
+      ...nuevoProd,
+      id: editandoId,
+      registradoPorMatricula: matricula
+    });
+
+    if (!resultado) {
+      alert('❌ Error al guardar. Revisa la consola (F12 → Network).');
+      return;
+    }
+
     alert(editandoId ? '✅ Producto actualizado' : '✅ Producto guardado');
     setNuevoProd({ codigo:'', nombre:'', stock:0, precioCompra:0, precioVenta:0, categoria:'Fundas', imagen:'' });
-    setEditandoId(null); cargarProductos();
-  };
+    setEditandoId(null);
+    cargarProductos();
+
+  } catch (err) {
+    console.error('Error al guardar producto:', err);
+    alert('❌ Error: ' + err.message);
+  }
+};
 
   const prepararEdicion = (p) => {
     setEditandoId(p.id);
