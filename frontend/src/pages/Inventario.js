@@ -229,7 +229,7 @@ const Inventario = () => {
 
   // ── Reportes ──
   const [todasLasVentas, setTodasLasVentas] = useState([]);
-  const [filtro, setFiltro]               = useState('dia');
+  const [filtro, setFiltro]                = useState('dia');
   const [busquedaFecha, setBusquedaFecha] = useState(new Date().toISOString().split('T')[0]);
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [modalConfirmarEliminar, setModalConfirmarEliminar] = useState(null);
@@ -247,10 +247,11 @@ const Inventario = () => {
   const [ventaExitosa, setVentaExitosa] = useState(null);
 
   // ── Usuarios ──
- const API_USUARIOS = '/api/usuarios';
-const [usuarios, setUsuarios]     = useState([]);
-const [formUser, setFormUser]     = useState({ matricula:'', password:'', rol:'VENDEDOR' });
-const [cargandoUser, setCargandoUser] = useState(false);
+  // ✅ ACTUALIZADO: Ruta relativa para Railway
+  const API_USUARIOS = '/api/usuarios';
+  const [usuarios, setUsuarios]     = useState([]);
+  const [formUser, setFormUser]     = useState({ matricula:'', password:'', rol:'VENDEDOR' });
+  const [cargandoUser, setCargandoUser] = useState(false);
 
   // ══════════════════════════════════════════
   // ── GASTOS (nuevo módulo) ──
@@ -277,7 +278,7 @@ const [cargandoUser, setCargandoUser] = useState(false);
   const agregarGasto = () => {
     const desc  = nuevoGasto.descripcion.trim();
     const monto = parseFloat(nuevoGasto.monto);
-    if (!desc)               return alert('Escribe una descripción');
+    if (!desc)                return alert('Escribe una descripción');
     if (isNaN(monto) || monto <= 0) return alert('Ingresa un monto válido mayor a 0');
     const gasto = {
       id: Date.now(),
@@ -313,8 +314,8 @@ const [cargandoUser, setCargandoUser] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
   const matricula = localStorage.getItem('usuarioLogueado') || 'desconocido';
-  const rol       = localStorage.getItem('rolUsuario') || 'VENDEDOR';
-  const esAdmin   = rol === 'ADMIN';
+  const rol        = localStorage.getItem('rolUsuario') || 'VENDEDOR';
+  const esAdmin    = rol === 'ADMIN';
 
   useEffect(() => {
     if (!localStorage.getItem('usuarioLogueado')) {
@@ -367,6 +368,7 @@ const [cargandoUser, setCargandoUser] = useState(false);
   const eliminarProducto = async (p) => {
     if (!window.confirm(`¿Eliminar el producto "${p.nombre}"?\nEsta acción no se puede deshacer.`)) return;
     try {
+      // ✅ ACTUALIZADO: Ruta relativa
       const res = await fetch(`/api/productos/${p.id}`, {
         method: 'DELETE', headers: { 'Content-Type': 'application/json' }
       });
@@ -381,7 +383,7 @@ const [cargandoUser, setCargandoUser] = useState(false);
         alert(`❌ Error del servidor: ${res.status}`);
       }
     } catch(e) {
-      alert('❌ No se pudo conectar al backend. Verifica que esté corriendo en el puerto 8080.');
+      alert('❌ No se pudo conectar al backend.');
     }
   };
 
@@ -422,7 +424,7 @@ const agregarUsuario = async () => {
     });
 
     if (!r.ok) {
-      const msg = await r.text(); // Captura el "Ya existe un usuario..." de Java
+      const msg = await r.text(); 
       throw new Error(msg);
     }
 
@@ -460,7 +462,6 @@ const eliminarUsuario = async (id, matriculaU) => {
     
     if (!r.ok) throw new Error('Error en el servidor al eliminar');
     
-    // Como en Java ahora devolvemos un JSON {message: "..."}, lo procesamos
     const resData = await r.json();
     console.log(resData.message);
     
@@ -556,6 +557,7 @@ const eliminarUsuario = async (id, matriculaU) => {
   // ── Eliminar venta (solo ADMIN) ──
   const eliminarVenta = async (venta) => {
     try {
+      // ✅ ACTUALIZADO: Ruta relativa
       const res = await fetch(`/api/ventas/${venta.id}`, {
         method: 'DELETE', headers: { 'Content-Type': 'application/json' }
       });
@@ -1648,12 +1650,8 @@ const eliminarUsuario = async (id, matriculaU) => {
                 </div>
               </div>
 
-              {/* ── KPIs: CAMBIO PRINCIPAL ──
-                  Ingresos Netos = totalVendido - totalGastosExtra
-              */}
+              {/* KPIs */}
               <div className="rep-kpi-grid" style={{gridTemplateColumns:'repeat(5, 1fr)'}}>
-
-                {/* ✅ MODIFICADO: Ingresos Netos (bruto - gastos) */}
                 <div className="rep-kpi-card ingresos">
                   <div className="rep-kpi-icon">💵</div>
                   <div className="rep-kpi-label">Ingresos Netos</div>
@@ -1682,7 +1680,7 @@ const eliminarUsuario = async (id, matriculaU) => {
                     -${totalGastosExtra.toLocaleString('es-MX',{minimumFractionDigits:2})}
                   </div>
                   <div className="rep-kpi-sub">
-                    {gastosPeriodo.length} gasto{gastosPeriodo.length !== 1 ? 's' : ''} registrado{gastosPeriodo.length !== 1 ? 's' : ''}
+                    {gastosPeriodo.length} gasto{gastosPeriodo.length !== 1 ? 's' : ''} registrado
                     {gastosPeriodo.length > 0 && (
                       <span
                         style={{display:'block', color:'#4f9eff', cursor:'pointer', marginTop:3}}
@@ -1783,7 +1781,6 @@ const eliminarUsuario = async (id, matriculaU) => {
                       <tr style={{background:'#0d0f14',borderTop:'2px solid #1e2230'}}>
                         <td colSpan={4} style={{padding:'13px 15px',fontWeight:700,fontSize:13}}>TOTALES</td>
                         <td className="mono" style={{color:'#f87171',fontWeight:700,padding:'13px 15px'}}>${totalGastos.toFixed(2)}</td>
-                        {/* ✅ MODIFICADO: columna Venta Total muestra ingreso neto */}
                         <td className="mono" style={{fontWeight:700,padding:'13px 15px'}}>
                           ${ingresosNetos.toFixed(2)}
                           {totalGastosExtra > 0 && (
@@ -2014,7 +2011,7 @@ const eliminarUsuario = async (id, matriculaU) => {
         </main>
       </div>
 
-      {/* ── MODAL LÍMITE ── */}
+      {/* ── MODALES ── */}
       {modalLimite && (
         <div className="modal-overlay" onClick={() => setModalLimite(false)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
@@ -2031,7 +2028,6 @@ const eliminarUsuario = async (id, matriculaU) => {
         </div>
       )}
 
-      {/* ── MODAL AGREGAR STOCK ── */}
       {modalAgregarStock && (
         <div className="modal-overlay" onClick={() => setModalAgregarStock(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
@@ -2058,7 +2054,6 @@ const eliminarUsuario = async (id, matriculaU) => {
                 <span style={{color:'#e8eaf0',fontWeight:700,fontSize:16}}>{modalAgregarStock.stock+parseInt(cantidadAgregar)} uds</span>
               </div>
             )}
-            <div style={{fontSize:12,color:'#6b7280',marginTop:10}}>💡 El stock actual se sumará con la cantidad ingresada.</div>
             <div className="modal-actions">
               <button className="btn ghost" onClick={() => setModalAgregarStock(null)}>Cancelar</button>
               <button className="btn green" onClick={confirmarAgregarStock}>✅ Confirmar</button>
@@ -2067,7 +2062,6 @@ const eliminarUsuario = async (id, matriculaU) => {
         </div>
       )}
 
-      {/* ── MODAL CONFIRMAR ELIMINAR VENTA ── */}
       {modalConfirmarEliminar && (
         <div className="modal-overlay" onClick={() => setModalConfirmarEliminar(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
@@ -2084,9 +2078,6 @@ const eliminarUsuario = async (id, matriculaU) => {
                 <span>Hora: <span style={{color:'#6b7280',fontFamily:'JetBrains Mono'}}>{formatHora(modalConfirmarEliminar.fechaVenta)}</span></span>
               </div>
             </div>
-            <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.2)',borderRadius:8,marginBottom:18,fontSize:12,color:'#f87171'}}>
-              ⚠️ Si la venta fue un error, recuerda ajustar el stock manualmente en Inventario.
-            </div>
             <div className="modal-actions">
               <button className="btn ghost" onClick={() => setModalConfirmarEliminar(null)}>Cancelar</button>
               <button className="btn red" style={{background:'#ef4444',color:'#fff',fontWeight:700}} onClick={() => eliminarVenta(modalConfirmarEliminar)}>🗑️ Sí, eliminar venta</button>
@@ -2095,7 +2086,6 @@ const eliminarUsuario = async (id, matriculaU) => {
         </div>
       )}
 
-      {/* ── MODAL CONFIRMAR ELIMINAR GASTO ── */}
       {modalEliminarGasto && (
         <div className="modal-overlay" onClick={() => setModalEliminarGasto(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
