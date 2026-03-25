@@ -1,41 +1,48 @@
-// ✅ Detecta automáticamente si estás en Railway o en Local
-const BASE_URL = window.location.origin; 
-const API_URL = `${BASE_URL}/api/productos`;
-
-export const obtenerProductos = async () => {
-    try {
-        const response = await fetch(API_URL);
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText);
-        }
-        return await response.json();
-    } catch (error) {
-        console.error("Error al obtener productos:", error);
-        return [];
-    }
-};
-
-export const guardarProducto = async (producto) => {
-    try {
-        const esEdicion = producto.id !== null && producto.id !== undefined;
-        const url = esEdicion ? `${API_URL}/${producto.id}` : API_URL;
-        const method = esEdicion ? "PUT" : "POST";
-
-        const response = await fetch(url, {
-            method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(producto)
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText);
-        }
-        
-        return await response.json();
-    } catch (error) {
-        console.error("Error al guardar producto:", error);
-        return null;
-    }
-};
+{
+  "name": "isla-tecnologica",
+  "version": "0.1.0",
+  "private": true,
+  "proxy": "http://localhost:8080",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^13.5.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.1",
+    "react-scripts": "5.0.1",
+    "recharts": "^3.8.0",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "cross-env CI=false react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0"
+  }
+}
