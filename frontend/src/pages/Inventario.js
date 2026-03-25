@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { obtenerProductos, guardarProducto } from '../services/productoService';
 import { obtenerVentas, registrarVenta } from '../services/ventaService';
-import { obtenerUsuarios, agregarUsuario, toggleBloqueoUsuario, eliminarUsuario } from '../services/usuarioService';
 import './Inventario.css';
 
 
@@ -248,10 +247,10 @@ const Inventario = () => {
   const [ventaExitosa, setVentaExitosa] = useState(null);
 
   // ── Usuarios ──
-  const API_USUARIOS = 'http://localhost:8080/api/usuarios';
-  const [usuarios, setUsuarios]     = useState([]);
-  const [formUser, setFormUser]     = useState({ matricula:'', password:'', rol:'VENDEDOR' });
-  const [cargandoUser, setCargandoUser] = useState(false);
+ const API_USUARIOS = '/api/usuarios';
+const [usuarios, setUsuarios]     = useState([]);
+const [formUser, setFormUser]     = useState({ matricula:'', password:'', rol:'VENDEDOR' });
+const [cargandoUser, setCargandoUser] = useState(false);
 
   // ══════════════════════════════════════════
   // ── GASTOS (nuevo módulo) ──
@@ -557,7 +556,7 @@ const eliminarUsuario = async (id, matriculaU) => {
   // ── Eliminar venta (solo ADMIN) ──
   const eliminarVenta = async (venta) => {
     try {
-      const res = await fetch(`http://localhost:8080/api/ventas/${venta.id}`, {
+      const res = await fetch(`/api/ventas/${venta.id}`, {
         method: 'DELETE', headers: { 'Content-Type': 'application/json' }
       });
       if (res.ok || res.status === 204 || res.status === 200) {
