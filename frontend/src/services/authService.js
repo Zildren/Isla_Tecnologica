@@ -1,9 +1,9 @@
-const BASE_URL = process.env.REACT_APP_API_URL;
-const API_URL = `${BASE_URL}/api/auth/login`;
+// Ya no necesitas la variable de entorno, usamos ruta relativa
+const API_URL = '/api/auth/login';
 
-// 🔍 Debug
-console.log("BASE_URL:", BASE_URL);
-console.log("Login API:", API_URL);
+// 🔍 Debug (ahora verás la ruta absoluta en la consola)
+console.log("Login API (relativa):", API_URL);
+console.log("URL completa de la petición:", window.location.origin + API_URL);
 
 export const loginUsuario = async (matricula, password) => {
     try {
