@@ -12,7 +12,6 @@ import java.util.Collections;
 
 @RestController
 @RequestMapping("/api/ventas")
-@CrossOrigin(origins = "http://localhost:3000")
 public class VentaController {
 
     @Autowired
@@ -35,20 +34,16 @@ public class VentaController {
     @PostMapping
     public ResponseEntity<?> registrarVenta(@RequestBody Venta venta) {
         try {
-            // 1. Buscar producto por código
             Producto producto = productoRepository.findByCodigo(venta.getCodigoProducto())
                     .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + venta.getCodigoProducto()));
 
-            // 2. Verificar stock
             if (producto.getStock() < venta.getCantidad()) {
                 return ResponseEntity.badRequest().body("Stock insuficiente. Disponible: " + producto.getStock());
             }
 
-            // 3. Descontar stock
             producto.setStock(producto.getStock() - venta.getCantidad());
             productoRepository.save(producto);
 
-            // 4. Capturar precioCompra con fallback seguro
             double costoBase = (producto.getPrecioCompra() != null && producto.getPrecioCompra() > 0)
                     ? producto.getPrecioCompra()
                     : 0.0;
@@ -59,15 +54,12 @@ public class VentaController {
                     + " | precioVenta: " + producto.getPrecioVenta()
                     + " | cantidad: " + venta.getCantidad());
 
-            // 5. Validar precioVenta
             if (venta.getPrecioVenta() == null || venta.getPrecioVenta() <= 0) {
                 venta.setPrecioVenta(producto.getPrecioVenta());
             }
 
-            // 6. Calcular total
             venta.setTotal(venta.getCantidad() * venta.getPrecioVenta());
 
-            // 7. Guardar venta
             Venta nuevaVenta = ventaRepository.save(venta);
             return ResponseEntity.ok(nuevaVenta);
 
@@ -77,7 +69,6 @@ public class VentaController {
         }
     }
 
-    // ── ELIMINAR VENTA (solo accesible para ADMIN desde el frontend) ──
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminarVenta(@PathVariable Long id) {
         try {

@@ -10,30 +10,21 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/productos")
-@CrossOrigin(origins = "http://localhost:3000", methods = {
-    RequestMethod.GET,
-    RequestMethod.POST,
-    RequestMethod.PUT,
-    RequestMethod.DELETE
-})
 public class ProductoController {
 
     @Autowired
     private ProductoRepository productoRepository;
 
-    // GET — obtener todos
     @GetMapping
     public List<Producto> obtenerTodos() {
         return productoRepository.findAll();
     }
 
-    // POST — crear nuevo producto
     @PostMapping
     public Producto crear(@RequestBody Producto producto) {
         return productoRepository.save(producto);
     }
 
-    // PUT /{id} — editar producto completo (usado por el formulario de inventario)
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody Producto producto) {
         return productoRepository.findById(id).map(existing -> {
@@ -48,7 +39,6 @@ public class ProductoController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // PUT /{id}/descontar — descontar stock al registrar venta
     @PutMapping("/{id}/descontar")
     public ResponseEntity<?> descontarStock(@PathVariable Long id, @RequestParam Integer cantidad) {
         return productoRepository.findById(id).map(producto -> {
@@ -60,13 +50,12 @@ public class ProductoController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // DELETE /{id} — eliminar producto
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
         if (!productoRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         productoRepository.deleteById(id);
-        return ResponseEntity.noContent().build(); // 204
+        return ResponseEntity.noContent().build();
     }
 }

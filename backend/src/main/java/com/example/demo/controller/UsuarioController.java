@@ -11,19 +11,16 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/usuarios")
-@CrossOrigin(origins = "*")
 public class UsuarioController {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    // GET - listar todos
     @GetMapping
     public List<Usuario> obtenerTodos() {
         return usuarioRepository.findAll();
     }
 
-    // POST - agregar usuario
     @PostMapping
     public ResponseEntity<?> agregar(@RequestBody Usuario usuario) {
         if (usuarioRepository.findByMatricula(usuario.getMatricula()).isPresent()) {
@@ -33,7 +30,6 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioRepository.save(usuario));
     }
 
-    // PUT - bloquear/desbloquear
     @PutMapping("/{id}/bloquear")
     public ResponseEntity<?> toggleBloqueo(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
         return usuarioRepository.findById(id).map(u -> {
@@ -42,7 +38,6 @@ public class UsuarioController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // DELETE - eliminar usuario
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
         if (!usuarioRepository.existsById(id)) {

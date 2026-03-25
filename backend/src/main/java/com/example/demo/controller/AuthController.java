@@ -11,8 +11,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*", allowedHeaders = "*",
-    methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS, RequestMethod.PUT, RequestMethod.DELETE})
 public class AuthController {
 
     @Autowired
@@ -32,7 +30,6 @@ public class AuthController {
 
                     if (u.getPassword().trim().equals(passwordRecibida)) {
 
-                        // ✅ Verificar si está bloqueado
                         if (Boolean.TRUE.equals(u.getBloqueado())) {
                             Map<String, String> bloqueado = new HashMap<>();
                             bloqueado.put("status", "BLOQUEADO");
