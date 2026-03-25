@@ -1,11 +1,9 @@
-const BASE_URL = process.env.REACT_APP_API_URL;
+// ✅ Endpoint correcto usando ruta relativa (ya no depende de variables de entorno)
+const API_URL = '/api/productos';
 
-// ✅ Endpoint correcto (productos en plural)
-const API_URL = `${BASE_URL}/api/productos`;
-
-// 🔍 DEBUG (verifica que NO sea undefined)
-console.log("BASE_URL:", BASE_URL);
-console.log("API_URL:", API_URL);
+// 🔍 DEBUG (verifica que la URL sea la esperada)
+console.log("API_URL (relativa):", API_URL);
+console.log("URL completa de la petición:", window.location.origin + API_URL);
 
 // ✅ Obtener productos
 export const obtenerProductos = async () => {
