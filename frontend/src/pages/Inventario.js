@@ -349,7 +349,7 @@ const Inventario = () => {
 
     if (!resultado) {
       alert('❌ Error al guardar. Revisa la consola (F12 → Network).');
-      return;
+      return;api/productos
     }
 
     alert(editandoId ? '✅ Producto actualizado' : '✅ Producto guardado');
