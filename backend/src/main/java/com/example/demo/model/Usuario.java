@@ -14,7 +14,7 @@ public class Usuario {
     @Column(name = "matricula")
     private String matricula;
 
-    @Column(name = "password")
+    @Column(name = "user_password")
     private String password;
     
     private String rol;
