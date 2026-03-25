@@ -1,9 +1,9 @@
-// ✅ Detecta automáticamente el dominio (Railway o Local)
+// ✅ Detecta automáticamente el dominio (Railway o Local) para evitar ERR_CONNECTION_REFUSED
 const API_BASE = window.location.origin;
 const API_URL = `${API_BASE}/api/usuarios`;
 
 /**
- * Obtener todos los usuarios
+ * Obtener todos los usuarios registrados
  */
 export const obtenerUsuarios = async () => {
     try {
@@ -15,7 +15,7 @@ export const obtenerUsuarios = async () => {
         return await response.json();
     } catch (error) {
         console.error("Error al obtener usuarios:", error);
-        return []; // Retorna array vacío para evitar errores en el .map() de React
+        return []; 
     }
 };
 
@@ -31,26 +31,25 @@ export const agregarUsuario = async (usuario) => {
         });
         
         if (!response.ok) {
-            // Captura el mensaje específico del backend (ej: "Ya existe la matrícula")
+            // Captura errores específicos como "Matrícula duplicada" enviados desde Java
             const msg = await response.text();
             throw new Error(msg);
         }
         return await response.json();
     } catch (error) {
         console.error("Error al agregar usuario:", error);
-        throw error; // Re-lanzamos para que el componente maneje el alert
+        throw error; 
     }
 };
 
 /**
- * Bloquear/Desbloquear usuario (PUT)
+ * Bloquear o desbloquear usuario (PUT)
  */
 export const toggleBloqueoUsuario = async (id, bloqueadoActualmente) => {
     try {
         const response = await fetch(`${API_URL}/${id}/bloquear`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            // Enviamos el estado inverso al actual
             body: JSON.stringify({ bloqueado: !bloqueadoActualmente })
         });
 
@@ -79,7 +78,7 @@ export const eliminarUsuario = async (id) => {
             throw new Error(errorText || "Error en el servidor al eliminar usuario");
         }
         
-        // Verificamos si hay contenido antes de intentar parsear JSON
+        // Verifica si el backend devolvió un JSON o está vacío (204 No Content)
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.includes("application/json")) {
             return await response.json();
@@ -90,3 +89,6 @@ export const eliminarUsuario = async (id) => {
         throw error;
     }
 };
+
+// 🚩 Marca de control para verificar despliegue en consola (F12)
+console.log("Servicio de Usuarios cargado con rutas relativas: OK");

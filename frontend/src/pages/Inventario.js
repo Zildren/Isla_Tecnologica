@@ -404,7 +404,7 @@ const Inventario = () => {
   // ── Usuarios helpers ──
 const cargarUsuarios = async () => {
   try {
-    const r = await fetch(API_USUARIOS);
+    const r = await fetch(`/api/usuarios`);
     if (!r.ok) throw new Error('Error al obtener la lista');
     const data = await r.json();
     setUsuarios(data);
