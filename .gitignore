@@ -1,6 +1,4 @@
 # --- Configuración para Spring Boot y H2 ---
-
-# Ignorar la carpeta de datos de H2 (según tu application.properties)
 /data/
 *.mv.db
 *.trace.db
@@ -11,8 +9,20 @@ build/
 .gradle/
 bin/
 
-# Archivos de configuración de sistema/IDE de Java
+# --- Configuración para React (Frontend) ---
+# Esto es CRÍTICO para que Railway no use el código viejo
+frontend/build/
+frontend/node_modules/
+node_modules/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos de configuración de sistema/IDE
 .settings/
 .classpath
 .project
 *.class
+.DS_Store
+Thumbs.db
