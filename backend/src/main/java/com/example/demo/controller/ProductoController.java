@@ -11,7 +11,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/productos")
 // 🟢 CRÍTICO: Permite que tu app de React (puerto 3000) se conecte a Spring (8080)
-@CrossOrigin(origins = "http://localhost:3000") 
+@CrossOrigin(origins = "*") 
 public class ProductoController {
 
     @Autowired
