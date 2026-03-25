@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
+/* ─── Reseteo Global ────────────────────────────────────── */
 *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -14,8 +15,9 @@
     justify-content: center;
     font-family: 'Sora', sans-serif;
     background: #050811;
-    overflow: hidden;
+    overflow-x: hidden;
     position: relative;
+    padding: 20px;
 }
 
 /* ─── Fondo animado ────────────────────────────────────── */
@@ -47,46 +49,25 @@
     opacity: 0.35;
     animation: floatOrb 12s ease-in-out infinite;
     z-index: 0;
+    pointer-events: none;
 }
 
-.orb-1 {
-    width: 420px;
-    height: 420px;
-    background: radial-gradient(circle, #0066ff, transparent);
-    top: -100px;
-    left: -120px;
-    animation-delay: 0s;
-}
-
-.orb-2 {
-    width: 320px;
-    height: 320px;
-    background: radial-gradient(circle, #00c8b4, transparent);
-    bottom: -80px;
-    right: -60px;
-    animation-delay: -5s;
-}
-
-.orb-3 {
-    width: 200px;
-    height: 200px;
-    background: radial-gradient(circle, #4488ff, transparent);
-    top: 50%;
-    right: 15%;
-    animation-delay: -8s;
-}
+.orb-1 { width: 420px; height: 420px; background: radial-gradient(circle, #0066ff, transparent); top: -100px; left: -120px; }
+.orb-2 { width: 320px; height: 320px; background: radial-gradient(circle, #00c8b4, transparent); bottom: -80px; right: -60px; animation-delay: -5s; }
+.orb-3 { width: 200px; height: 200px; background: radial-gradient(circle, #4488ff, transparent); top: 50%; right: 15%; animation-delay: -8s; }
 
 @keyframes floatOrb {
     0%, 100% { transform: translate(0, 0) scale(1); }
-    33%       { transform: translate(30px, -30px) scale(1.05); }
-    66%       { transform: translate(-20px, 20px) scale(0.97); }
+    33% { transform: translate(30px, -30px) scale(1.05); }
+    66% { transform: translate(-20px, 20px) scale(0.97); }
 }
 
-/* ─── Card ─────────────────────────────────────────────── */
+/* ─── Card Principal ───────────────────────────────────── */
 .login-card {
     position: relative;
     z-index: 10;
-    width: 420px;
+    width: 100%;
+    max-width: 420px;
     padding: 48px 40px 40px;
     background: rgba(255, 255, 255, 0.035);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -109,249 +90,120 @@
 
 .card-shine {
     position: absolute;
-    top: 0;
-    left: 20%;
-    right: 20%;
-    height: 1px;
+    top: 0; left: 20%; right: 20%; height: 1px;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
-    border-radius: 1px;
 }
 
-/* ─── Logo ─────────────────────────────────────────────── */
+/* ─── Elementos de Marca ───────────────────────────────── */
 .brand-logo {
     display: block;
-    width: 80px;
-    height: 80px;
-    object-fit: contain;
-    margin: 0 auto 20px auto;
+    width: 80px; height: 80px;
+    margin: 0 auto 20px;
     filter: drop-shadow(0 0 16px rgba(79, 163, 255, 0.35));
 }
 
-/* ─── Badge ────────────────────────────────────────────── */
 .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
+    display: inline-flex; align-items: center; gap: 7px;
     background: rgba(0, 120, 255, 0.12);
     border: 1px solid rgba(0, 120, 255, 0.25);
-    border-radius: 100px;
-    padding: 5px 14px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    color: #4fa3ff;
-    text-transform: uppercase;
-    margin-bottom: 28px;
+    border-radius: 100px; padding: 5px 14px;
+    font-size: 11px; font-weight: 600; color: #4fa3ff;
+    text-transform: uppercase; margin-bottom: 28px;
 }
 
 .badge-dot {
-    width: 6px;
-    height: 6px;
-    background: #4fa3ff;
-    border-radius: 50%;
-    animation: pulse-dot 2s ease-in-out infinite;
+    width: 6px; height: 6px; background: #4fa3ff;
+    border-radius: 50%; animation: pulse-dot 2s ease-in-out infinite;
 }
 
-@keyframes pulse-dot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.4; transform: scale(0.7); }
-}
+@keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
 
-/* ─── Marca ────────────────────────────────────────────── */
-.brand-title {
-    font-size: 30px;
-    font-weight: 700;
-    color: #ffffff;
-    line-height: 1.1;
-    letter-spacing: -0.5px;
-    margin-bottom: 6px;
-}
-
+.brand-title { font-size: 30px; font-weight: 700; color: #ffffff; line-height: 1.1; margin-bottom: 6px; }
 .brand-title span {
     background: linear-gradient(135deg, #4fa3ff 0%, #00e5cc 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 
-.brand-sub {
-    font-size: 13.5px;
-    color: rgba(255, 255, 255, 0.38);
-    font-weight: 300;
-    margin-bottom: 36px;
-    letter-spacing: 0.01em;
-}
+.brand-sub { font-size: 13.5px; color: rgba(255, 255, 255, 0.38); font-weight: 300; margin-bottom: 32px; }
 
-/* ─── Divisor ──────────────────────────────────────────── */
 .divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
     margin-bottom: 32px;
 }
 
-/* ─── Campos ───────────────────────────────────────────── */
-.field-group {
-    margin-bottom: 20px;
-}
-
+/* ─── Formulario y Campos ──────────────────────────────── */
+.field-group { margin-bottom: 20px; text-align: left; }
 .field-label {
-    display: block;
-    font-size: 11.5px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.45);
-    margin-bottom: 8px;
-    transition: color 0.2s;
+    display: block; font-size: 11.5px; font-weight: 600;
+    color: rgba(255, 255, 255, 0.45); text-transform: uppercase; margin-bottom: 8px;
 }
 
-.field-group.focused .field-label {
-    color: #4fa3ff;
-}
-
-.input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.input-icon {
-    position: absolute;
-    left: 16px;
-    color: rgba(255, 255, 255, 0.2);
-    transition: color 0.2s;
-    pointer-events: none;
-    display: flex;
-}
-
-.field-group.focused .input-icon {
-    color: #4fa3ff;
-}
+.input-wrapper { position: relative; display: flex; align-items: center; }
+.input-icon { position: absolute; left: 16px; color: rgba(255, 255, 255, 0.2); pointer-events: none; }
 
 .field-input {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 14px 16px 14px 46px;
-    color: #ffffff;
-    font-size: 14.5px;
-    font-family: 'Sora', sans-serif;
-    outline: none;
-    transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
-    -webkit-text-fill-color: #ffffff;
-}
-
-.field-input::placeholder {
-    color: rgba(255, 255, 255, 0.18);
-    font-weight: 300;
+    width: 100%; background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px;
+    padding: 14px 16px 14px 46px; color: #ffffff; font-size: 14.5px;
+    font-family: inherit; transition: all 0.25s; outline: none;
 }
 
 .field-input:focus {
-    border-color: rgba(79, 163, 255, 0.5);
-    background: rgba(79, 163, 255, 0.06);
+    border-color: rgba(79, 163, 255, 0.5); background: rgba(79, 163, 255, 0.06);
     box-shadow: 0 0 0 3px rgba(79, 163, 255, 0.1);
 }
 
-.field-input.with-eye {
-    padding-right: 48px;
-}
-
-/* ─── Botón ojo ────────────────────────────────────────── */
 .eye-btn {
-    position: absolute;
-    right: 14px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: rgba(255, 255, 255, 0.25);
-    display: flex;
-    align-items: center;
-    padding: 4px;
-    border-radius: 6px;
-    transition: color 0.2s, background 0.2s;
+    position: absolute; right: 14px; background: none; border: none;
+    color: rgba(255, 255, 255, 0.25); cursor: pointer; padding: 4px;
 }
 
-.eye-btn:hover {
-    color: #4fa3ff;
-    background: rgba(79, 163, 255, 0.1);
-}
-
-.eye-btn:active {
-    transform: scale(0.92);
-}
-
-/* ─── Botón submit ─────────────────────────────────────── */
 .submit-btn {
-    margin-top: 28px;
-    width: 100%;
-    padding: 15px;
+    width: 100%; padding: 15px; margin-top: 28px;
     background: linear-gradient(135deg, #0066ff 0%, #0099cc 100%);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 700;
-    font-family: 'Sora', sans-serif;
-    letter-spacing: 0.05em;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    transition: opacity 0.2s, transform 0.15s, box-shadow 0.25s;
-    box-shadow: 0 4px 24px rgba(0, 102, 255, 0.35);
+    color: white; border: none; border-radius: 12px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 4px 24px rgba(0, 102, 255, 0.35); transition: all 0.2s;
 }
 
-.submit-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), transparent);
-    opacity: 0;
-    transition: opacity 0.2s;
+.submit-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(0, 102, 255, 0.5); }
+
+.login-footer { margin-top: 28px; text-align: center; font-size: 11px; color: rgba(255, 255, 255, 0.18); font-family: 'JetBrains Mono', monospace; }
+
+/* ─── MEDIA QUERIES (RESPONSIVE) ────────────────────────── */
+
+/* Tablets */
+@media (max-width: 768px) {
+    .login-card { padding: 40px 32px; max-width: 400px; }
+    .orb-1 { width: 300px; height: 300px; }
+    .orb-2 { width: 250px; height: 250px; }
 }
 
-.submit-btn:hover::before {
-    opacity: 1;
+/* Móviles */
+@media (max-width: 480px) {
+    .login-root { align-items: flex-end; padding: 0; } /* Efecto modern bottom-sheet */
+    
+    .login-card {
+        max-width: 100%;
+        border-radius: 32px 32px 0 0;
+        padding: 40px 24px 60px;
+        border-bottom: none;
+        transform: translateY(0); /* Evita saltos en móviles */
+    }
+
+    .brand-title { font-size: 26px; }
+    
+    /* Evita el zoom automático en inputs de iPhone (mínimo 16px recomendado) */
+    .field-input { font-size: 16px; padding: 12px 16px 12px 42px; }
+    
+    .orb-3 { display: none; } /* Mejor rendimiento en móviles */
+    .orb-1 { top: -50px; left: -50px; width: 200px; height: 200px; }
 }
 
-.submit-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 32px rgba(0, 102, 255, 0.5);
-}
-
-.submit-btn:active {
-    transform: translateY(0);
-}
-
-.submit-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* ─── Spinner ──────────────────────────────────────────── */
-.spinner {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    vertical-align: middle;
-    margin-right: 8px;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* ─── Footer ───────────────────────────────────────────── */
-.login-footer {
-    margin-top: 28px;
-    text-align: center;
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.18);
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 0.05em;
+/* Pantallas con poca altura o modo horizontal */
+@media (max-height: 650px) {
+    .login-root { align-items: flex-start; padding: 20px; overflow-y: auto; }
+    .login-card { margin-bottom: 20px; }
+    .brand-logo { width: 60px; height: 60px; margin-bottom: 15px; }
 }

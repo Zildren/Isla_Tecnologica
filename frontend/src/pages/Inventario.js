@@ -4,6 +4,10 @@ import { obtenerProductos, guardarProducto } from '../services/productoService';
 import { obtenerVentas, registrarVenta } from '../services/ventaService';
 import './Inventario.css';
 
+// ═══════════════════════════════════════════
+// URL BASE DEL BACKEND
+// ═══════════════════════════════════════════
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 // ═══════════════════════════════════════════
 // GRÁFICA DE ÁREA SVG (sin dependencias)
@@ -192,8 +196,20 @@ const stockStatus = (stock, limit) => stock === 0 ? 'critical' : stock <= limit 
 const stockLabel  = { ok: '✅', low: '⚠️', critical: '🔴' };
 
 // ═══════════════════════════════════════════
-// CATEGORÍAS DE GASTOS
+// CATEGORÍAS
 // ═══════════════════════════════════════════
+const CATEGORIAS_PRODUCTO = [
+  'Fundas',
+  'Cargadores',
+  'Audifonos',
+  'Cables',
+  'Accesorios',
+  'Pantallas',
+  'Baterias',
+  'Bocinas',
+  'Otros',
+];
+
 const CATEGORIAS_GASTO = [
   'Operativo',
   'Renta / Local',
@@ -247,14 +263,12 @@ const Inventario = () => {
   const [ventaExitosa, setVentaExitosa] = useState(null);
 
   // ── Usuarios ──
-  const API_USUARIOS = 'http://localhost:8080/api/usuarios';
+  const API_USUARIOS = `${API_BASE}/api/usuarios`;
   const [usuarios, setUsuarios]     = useState([]);
   const [formUser, setFormUser]     = useState({ matricula:'', password:'', rol:'VENDEDOR' });
   const [cargandoUser, setCargandoUser] = useState(false);
 
-  // ══════════════════════════════════════════
-  // ── GASTOS (nuevo módulo) ──
-  // ══════════════════════════════════════════
+  // ── Gastos ──
   const [gastos, setGastos] = useState(() => {
     try { return JSON.parse(localStorage.getItem('gastos_pos') || '[]'); } catch { return []; }
   });
@@ -264,8 +278,8 @@ const Inventario = () => {
     categoria: 'Operativo',
     fecha: new Date().toISOString().split('T')[0],
   });
-  const [busquedaGasto, setBusquedaGasto]         = useState('');
-  const [filtroCategGasto, setFiltroCategGasto]   = useState('Todas');
+  const [busquedaGasto, setBusquedaGasto]           = useState('');
+  const [filtroCategGasto, setFiltroCategGasto]     = useState('Todas');
   const [modalEliminarGasto, setModalEliminarGasto] = useState(null);
   const [gastoEditando, setGastoEditando]           = useState(null);
 
@@ -367,7 +381,7 @@ const Inventario = () => {
   const eliminarProducto = async (p) => {
     if (!window.confirm(`¿Eliminar el producto "${p.nombre}"?\nEsta acción no se puede deshacer.`)) return;
     try {
-      const res = await fetch(`http://localhost:8080/api/productos/${p.id}`, {
+      const res = await fetch(`${API_BASE}/api/productos/${p.id}`, {
         method: 'DELETE', headers: { 'Content-Type': 'application/json' }
       });
       if (res.ok || res.status === 204 || res.status === 200) {
@@ -376,12 +390,12 @@ const Inventario = () => {
       } else if (res.status === 404) {
         alert('❌ Producto no encontrado en el servidor');
       } else if (res.status === 405) {
-        alert('❌ El backend no tiene el endpoint DELETE habilitado.\nAgrega @DeleteMapping("/{id}") en tu ProductoController.java');
+        alert('❌ El backend no tiene el endpoint DELETE habilitado.');
       } else {
         alert(`❌ Error del servidor: ${res.status}`);
       }
     } catch(e) {
-      alert('❌ No se pudo conectar al backend. Verifica que esté corriendo en el puerto 8080.');
+      alert('❌ No se pudo conectar al backend.');
     }
   };
 
@@ -517,7 +531,7 @@ const Inventario = () => {
   // ── Eliminar venta (solo ADMIN) ──
   const eliminarVenta = async (venta) => {
     try {
-      const res = await fetch(`http://localhost:8080/api/ventas/${venta.id}`, {
+      const res = await fetch(`${API_BASE}/api/ventas/${venta.id}`, {
         method: 'DELETE', headers: { 'Content-Type': 'application/json' }
       });
       if (res.ok || res.status === 204 || res.status === 200) {
@@ -527,7 +541,7 @@ const Inventario = () => {
         alert('❌ Venta no encontrada en el servidor');
         setModalConfirmarEliminar(null);
       } else if (res.status === 405) {
-        alert('❌ El backend no tiene DELETE habilitado.\nAgrega @DeleteMapping("/{id}") en tu VentaController.java');
+        alert('❌ El backend no tiene DELETE habilitado.');
         setModalConfirmarEliminar(null);
       } else {
         alert(`❌ Error del servidor: ${res.status}`);
@@ -566,7 +580,7 @@ const Inventario = () => {
   const totalGastos   = ventasFiltradas.reduce((s,v) => s + (v.precioCompra ?? 0) * (v.cantidad ?? 0), 0);
   const totalTickets  = ventasFiltradas.length;
 
-  // ── Gastos del periodo seleccionado en reportes ──
+  // ── Gastos del periodo ──
   const gastosPeriodo = gastos.filter(g => {
     const fg = new Date(g.fecha + 'T12:00:00');
     return filtro === 'dia'
@@ -576,12 +590,8 @@ const Inventario = () => {
       : fg.getFullYear() === fechaRef.getFullYear();
   });
   const totalGastosExtra = gastosPeriodo.reduce((s, g) => s + g.monto, 0);
-
-  // Ingresos netos = ingresos brutos - gastos operativos del periodo
-  const ingresosNetos = totalVendido - totalGastosExtra;
-
-  // Ganancia neta = ingresos - costo de mercancía - gastos operativos del periodo
-  const gananciaNeta = totalVendido - totalGastos - totalGastosExtra;
+  const ingresosNetos    = totalVendido - totalGastosExtra;
+  const gananciaNeta     = totalVendido - totalGastos - totalGastosExtra;
 
   const topProductos = ventasFiltradas.reduce((acc, v) => {
     acc[v.nombreProducto] = (acc[v.nombreProducto] || 0) + (v.cantidad ?? 0);
@@ -662,7 +672,7 @@ const Inventario = () => {
     critical: 'Sin Stock',
   }[filtroEstStock];
 
-  // ── Gastos: filtrado para la tabla del módulo ──
+  // ── Gastos: filtrado ──
   const gastosCategs = ['Todas', ...new Set(gastos.map(g => g.categoria))];
   const gastosFiltrados = gastos
     .filter(g => {
@@ -676,7 +686,6 @@ const Inventario = () => {
   const totalGastosGeneral   = gastos.reduce((s, g) => s + g.monto, 0);
   const totalGastosFiltrados = gastosFiltrados.reduce((s, g) => s + g.monto, 0);
 
-  // ── Gastos por categoría (para el resumen visual) ──
   const gastosPorCategoria = gastos.reduce((acc, g) => {
     acc[g.categoria] = (acc[g.categoria] || 0) + g.monto;
     return acc;
@@ -792,7 +801,6 @@ const Inventario = () => {
     catch { return f; }
   };
 
-  // Colores por categoría de gasto
   const colorCategoria = (cat) => {
     const mapa = {
       'Operativo':                     '#4f9eff',
@@ -978,7 +986,18 @@ const Inventario = () => {
                       <input className="inp" style={{width:85}} type="number" placeholder="Stock" value={nuevoProd.stock} onChange={e => setNuevoProd({...nuevoProd, stock:parseInt(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Costo $" value={nuevoProd.precioCompra} onChange={e => setNuevoProd({...nuevoProd, precioCompra:parseFloat(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Venta $" value={nuevoProd.precioVenta} onChange={e => setNuevoProd({...nuevoProd, precioVenta:parseFloat(e.target.value)})} required />
+
+                      {/* ✅ SELECT DE CATEGORÍA */}
+                      <select
+                        className="inp"
+                        style={{minWidth:160}}
+                        value={nuevoProd.categoria}
+                        onChange={e => setNuevoProd({...nuevoProd, categoria: e.target.value})}
+                      >
+                        {CATEGORIAS_PRODUCTO.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
                     </div>
+
                     <div style={{marginTop:12}}>
                       <div style={{fontSize:11, color:'#6b7280', marginBottom:6, fontFamily:'JetBrains Mono'}}>🖼️ Imagen del producto</div>
                       <div style={{display:'flex', gap:10, alignItems:'flex-start'}}>
@@ -1138,7 +1157,6 @@ const Inventario = () => {
                     style={{ padding:'9px 20px', fontSize:13, opacity: generandoPDF ? 0.7 : 1, display:'flex', alignItems:'center', gap:8 }}
                     onClick={exportarStockPDF}
                     disabled={generandoPDF || productosStock.length === 0}
-                    title={`Exportar "${filtroEstLabel}" a PDF`}
                   >
                     {generandoPDF ? '⏳ Generando...' : <>📄 PDF — <span style={{fontFamily:'JetBrains Mono', fontSize:11}}>{filtroEstLabel}</span></>}
                   </button>
@@ -1609,12 +1627,7 @@ const Inventario = () => {
                 </div>
               </div>
 
-              {/* ── KPIs: CAMBIO PRINCIPAL ──
-                  Ingresos Netos = totalVendido - totalGastosExtra
-              */}
               <div className="rep-kpi-grid" style={{gridTemplateColumns:'repeat(5, 1fr)'}}>
-
-                {/* ✅ MODIFICADO: Ingresos Netos (bruto - gastos) */}
                 <div className="rep-kpi-card ingresos">
                   <div className="rep-kpi-icon">💵</div>
                   <div className="rep-kpi-label">Ingresos Netos</div>
@@ -1645,10 +1658,7 @@ const Inventario = () => {
                   <div className="rep-kpi-sub">
                     {gastosPeriodo.length} gasto{gastosPeriodo.length !== 1 ? 's' : ''} registrado{gastosPeriodo.length !== 1 ? 's' : ''}
                     {gastosPeriodo.length > 0 && (
-                      <span
-                        style={{display:'block', color:'#4f9eff', cursor:'pointer', marginTop:3}}
-                        onClick={() => setTab('gastos')}
-                      >
+                      <span style={{display:'block', color:'#4f9eff', cursor:'pointer', marginTop:3}} onClick={() => setTab('gastos')}>
                         Ver detalle →
                       </span>
                     )}
@@ -1744,7 +1754,6 @@ const Inventario = () => {
                       <tr style={{background:'#0d0f14',borderTop:'2px solid #1e2230'}}>
                         <td colSpan={4} style={{padding:'13px 15px',fontWeight:700,fontSize:13}}>TOTALES</td>
                         <td className="mono" style={{color:'#f87171',fontWeight:700,padding:'13px 15px'}}>${totalGastos.toFixed(2)}</td>
-                        {/* ✅ MODIFICADO: columna Venta Total muestra ingreso neto */}
                         <td className="mono" style={{fontWeight:700,padding:'13px 15px'}}>
                           ${ingresosNetos.toFixed(2)}
                           {totalGastosExtra > 0 && (

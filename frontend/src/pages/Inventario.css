@@ -1101,3 +1101,131 @@ body {
   color: #4b5563;
   font-weight: 400;
 }
+
+/* ══════════════════════════════════════
+   SOPORTE RESPONSIVE (MÓVILES Y TABLETS)
+══════════════════════════════════════ */
+
+/* 1. Tablets y Laptops Pequeñas (Menos de 1024px) */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 68px; /* Colapsamos la sidebar por defecto */
+  }
+  .main-content {
+    margin-left: 68px;
+    padding: 20px;
+  }
+  .sidebar:hover {
+    width: 240px; /* Se expande al pasar el mouse */
+    box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+  }
+}
+
+/* 2. Dispositivos Móviles (Menos de 768px) */
+@media (max-width: 768px) {
+  .app-shell {
+    flex-direction: column; /* Cambiamos a disposición vertical */
+  }
+
+  /* Sidebar se convierte en barra superior o menú lateral oculto */
+  .sidebar {
+    width: 100%;
+    height: 64px;
+    min-width: 100%;
+    position: sticky;
+    flex-direction: row;
+    border-right: none;
+    border-bottom: 1px solid #1a1d28;
+    padding: 0 15px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sb-logo {
+    border-bottom: none;
+    padding: 0;
+    min-height: auto;
+  }
+
+  /* Ocultamos elementos que no caben en la barra superior móvil */
+  .sb-user, .sb-nav, .sb-section-label, .sb-bottom, .sb-collapse {
+    display: none; 
+  }
+
+  /* El contenido principal ya no tiene margen izquierdo */
+  .main-content, .main-content.collapsed {
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  /* Ajuste de Grillas (Stats y Reportes) */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr; /* 2 columnas en móvil */
+  }
+
+  .rep-kpi-grid {
+    grid-template-columns: 1fr; /* 1 columna para KPIs importantes */
+  }
+
+  /* Topbar se vuelve vertical */
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  /* Formularios: los inputs ocupan todo el ancho */
+  .prod-form-grid {
+    flex-direction: column;
+  }
+  
+  .inp.flex1 {
+    width: 100%;
+  }
+
+  /* Catálogo: ajustamos el tamaño de las tarjetas */
+  .cat-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+  }
+
+  .cat-nombre {
+    font-size: 11px;
+    min-height: auto;
+  }
+
+  .cat-precio {
+    font-size: 16px;
+  }
+}
+
+/* 3. Ajustes para Móviles Muy Pequeños (Menos de 480px) */
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar-title {
+    font-size: 18px;
+  }
+
+  .btn {
+    width: 100%; /* Botones de acción ocupan todo el ancho */
+    justify-content: center;
+  }
+
+  /* Hacemos la tabla scrolleable horizontalmente pero con aviso visual */
+  .tbl-wrap {
+    margin: 0 -16px; /* Pegamos la tabla a los bordes */
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+}
+
+/* 4. Optimización de Inputs para Touch */
+@media (pointer: coarse) {
+  .sb-item, .btn, .inp, .tab-btn {
+    min-height: 44px; /* Tamaño mínimo recomendado por Apple/Google para dedos */
+  }
+}
