@@ -16,15 +16,24 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(Arrays.asList(
-            "https://islatecnologica-production.up.railway.app",
-            "http://localhost:3000"
+        // ✅ Permitir todos los subdominios (ideal para Railway y desarrollo)
+        config.setAllowedOriginPatterns(Arrays.asList(
+                "https://*.railway.app",
+                "http://localhost:*"
         ));
+
+        // ✅ Métodos permitidos
         config.setAllowedMethods(Arrays.asList(
-            "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"
+                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
         ));
+
+        // ✅ Headers permitidos
         config.setAllowedHeaders(Arrays.asList("*"));
+
+        // ✅ Permitir cookies / auth
         config.setAllowCredentials(true);
+
+        // ✅ Tiempo de cache del preflight
         config.setMaxAge(3600L);
 
         source.registerCorsConfiguration("/**", config);
