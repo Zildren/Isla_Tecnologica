@@ -1,9 +1,8 @@
 // src/services/authService.js
-const BASE_URL = process.env.REACT_APP_API_URL;
-
+// Usamos ruta relativa para que las peticiones vayan al mismo dominio
 const API_URL = '/api/auth/login';
 
-// 🔍 Debug
+// 🔍 Debug (puedes eliminarlos después)
 console.log("Login API (relativa):", API_URL);
 console.log("URL completa de la petición:", window.location.origin + API_URL);
 
