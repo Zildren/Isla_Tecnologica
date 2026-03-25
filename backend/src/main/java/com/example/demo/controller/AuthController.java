@@ -24,9 +24,11 @@ import java.util.Map;
 
 @RequestMapping("/api/auth")
 
-@CrossOrigin(origins = "*", allowedHeaders = "*",
+@CrossOrigin(origins = "https://islatecnologica-production.up.railway.app", allowedHeaders = "*",
 
-    methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS, RequestMethod.PUT, RequestMethod.DELETE})
+    methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS, RequestMethod.PUT, RequestMethod.DELETE},
+    
+    allowCredentials = "true")
 
 public class AuthController {
 
