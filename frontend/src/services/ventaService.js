@@ -1,4 +1,5 @@
-const API_URL = "http://localhost:8080/api/ventas";
+//const API_URL = "http://localhost:8080/api/ventas";
+const API_URL = "/api/ventas";
 
 // ✅ Función para guardar nuevas ventas (La que ya tenías)
 export const registrarVenta = async (datosVenta) => {
