@@ -10,6 +10,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/productos")
+// 🟢 CRÍTICO: Permite que tu app de React (puerto 3000) se conecte a Spring (8080)
+@CrossOrigin(origins = "http://localhost:3000") 
 public class ProductoController {
 
     @Autowired
@@ -22,6 +24,7 @@ public class ProductoController {
 
     @PostMapping
     public Producto crear(@RequestBody Producto producto) {
+        // Tip: Aquí podrías setear una fecha de creación por defecto si no viene del front
         return productoRepository.save(producto);
     }
 
@@ -35,6 +38,10 @@ public class ProductoController {
             existing.setPrecioVenta(producto.getPrecioVenta());
             existing.setCategoria(producto.getCategoria());
             existing.setImagen(producto.getImagen());
+            
+            // Si añadiste este campo en tu modelo Producto.java, descomenta la siguiente línea:
+            // existing.setUltimaModificacionPor(producto.getRegistradoPorMatricula());
+            
             return ResponseEntity.ok(productoRepository.save(existing));
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -52,10 +59,15 @@ public class ProductoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
-        if (!productoRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
+        try {
+            if (!productoRepository.existsById(id)) {
+                return ResponseEntity.status(404).body("El producto con ID " + id + " no existe.");
+            }
+            productoRepository.deleteById(id);
+            // Retornamos 200 OK con un mensaje para que el 'alert' de React sea más informativo
+            return ResponseEntity.ok().body("Producto eliminado correctamente");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error al eliminar: " + e.getMessage());
         }
-        productoRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
     }
 }
