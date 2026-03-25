@@ -2,6 +2,7 @@
   "name": "isla-tecnologica",
   "version": "0.1.0",
   "private": true,
+  "proxy": "http://localhost:8080",
   "engines": {
     "node": ">=18.0.0"
   },
