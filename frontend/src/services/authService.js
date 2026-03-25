@@ -1,10 +1,14 @@
 // src/services/authService.js
-// Usamos ruta relativa para que las peticiones vayan al mismo dominio
-const API_URL = '/api/auth/login';
+
+// Base URL desde variables de entorno (Railway)
+const BASE_URL = process.env.REACT_APP_API_URL;
+
+// Endpoint completo
+const API_URL = `${BASE_URL}/api/auth/login`;
 
 // 🔍 Debug (puedes eliminarlos después)
-console.log("Login API (relativa):", API_URL);
-console.log("URL completa de la petición:", window.location.origin + API_URL);
+console.log("🌐 BASE_URL:", BASE_URL);
+console.log("🔗 API_URL:", API_URL);
 
 export const loginUsuario = async (matricula, password) => {
     try {
