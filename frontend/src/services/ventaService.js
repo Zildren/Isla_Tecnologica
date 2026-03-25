@@ -1,5 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_URL || '';
-const API_URL = `${BASE_URL}/api/ventas`;
+const API_URL = "https://tu-backend-en-railway.app/api/ventas";
 
 export const registrarVenta = async (datosVenta) => {
     try {

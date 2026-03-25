@@ -1,6 +1,6 @@
 // ✅ Detecta automáticamente el dominio (Railway o Local) para evitar ERR_CONNECTION_REFUSED
 const API_BASE = window.location.origin;
-const API_URL = `${API_BASE}/api/usuarios`;
+const API_URL = "https://tu-backend-en-railway.app/api/usuarios";
 
 /**
  * Obtener todos los usuarios registrados
