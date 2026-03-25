@@ -1,8 +1,6 @@
-// ✅ Detecta automáticamente el dominio (Railway o Local)
-const API_BASE = window.location.origin;
-const API_URL = `${API_BASE}/api/ventas`;
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL = `${BASE_URL}/api/ventas`;
 
-// ✅ Función para guardar nuevas ventas
 export const registrarVenta = async (datosVenta) => {
     try {
         const response = await fetch(API_URL, {
@@ -12,7 +10,6 @@ export const registrarVenta = async (datosVenta) => {
         });
         
         if (!response.ok) {
-            // Intentamos leer el error como texto por si no es JSON
             const errorText = await response.text();
             console.error("Error del servidor:", errorText);
             return null;
@@ -25,7 +22,6 @@ export const registrarVenta = async (datosVenta) => {
     }
 };
 
-// ✅ Función para el reporte de ganancias y estadísticas
 export const obtenerVentas = async () => {
     try {
         const response = await fetch(API_URL);
@@ -41,3 +37,5 @@ export const obtenerVentas = async () => {
         return []; 
     }
 };
+```
+

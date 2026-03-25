@@ -1,5 +1,4 @@
-// ✅ Detecta automáticamente si estás en Railway o en Local
-const BASE_URL = window.location.origin; 
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 const API_URL = `${BASE_URL}/api/productos`;
 
 export const obtenerProductos = async () => {
