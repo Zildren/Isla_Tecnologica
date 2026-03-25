@@ -37,5 +37,19 @@ export const obtenerVentas = async () => {
         return []; 
     }
 };
-```
 
+export const eliminarVenta = async (id) => {
+    try {
+        const response = await fetch(`${API_URL}/${id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (response.ok || response.status === 204 || response.status === 200) return true;
+        if (response.status === 404) throw new Error('Venta no encontrada');
+        if (response.status === 405) throw new Error('El backend no tiene DELETE habilitado');
+        throw new Error(`Error del servidor: ${response.status}`);
+    } catch (error) {
+        console.error("Error al eliminar venta:", error);
+        throw error;
+    }
+};

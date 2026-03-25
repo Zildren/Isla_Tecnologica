@@ -1,7 +1,8 @@
   import React, { useState, useEffect } from 'react';
   import { useNavigate } from 'react-router-dom';
-  import { obtenerProductos, guardarProducto } from '../services/productoService';
-  import { obtenerVentas, registrarVenta } from '../services/ventaService';
+  import { obtenerProductos, guardarProducto, eliminarProducto as deleteProducto } from '../services/productoService';
+import { obtenerVentas, registrarVenta, eliminarVenta as deleteVenta } from '../services/ventaService';
+
   import './Inventario.css';
 
   // ═══════════════════════════════════════════
@@ -383,26 +384,16 @@
 
     const abrirAgregarStock = (p) => { setModalAgregarStock(p); setCantidadAgregar(''); };
 
-    const eliminarProducto = async (p) => {
-  if (!window.confirm(`¿Eliminar el producto "${p.nombre}"?\nEsta acción no se puede deshacer.`)) return;
-  try {
-    const res = await fetch(`/api/productos/${p.id}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    if (res.ok || res.status === 204 || res.status === 200) {
-      setProductos(prev => prev.filter(x => x.id !== p.id));
-      alert(`✅ Producto "${p.nombre}" eliminado`);
-    } else if (res.status === 404) {
-      alert('❌ Producto no encontrado en el servidor');
-    } else if (res.status === 405) {
-      alert('❌ El backend no tiene el endpoint DELETE habilitado.');
-    } else {
-      alert(`❌ Error del servidor: ${res.status}`);
+  // Reemplaza la función eliminarProducto completa:
+const eliminarProducto = async (p) => {
+    if (!window.confirm(`¿Eliminar el producto "${p.nombre}"?\nEsta acción no se puede deshacer.`)) return;
+    try {
+        await deleteProducto(p.id);
+        setProductos(prev => prev.filter(x => x.id !== p.id));
+        alert(`✅ Producto "${p.nombre}" eliminado`);
+    } catch (e) {
+        alert('❌ ' + e.message);
     }
-  } catch(e) {
-    alert('❌ No se pudo conectar al backend.');
-  }
 };
 
     const confirmarAgregarStock = async () => {
@@ -573,30 +564,17 @@
     };
 
     // ── Eliminar venta (solo ADMIN) ──
+    // Reemplaza la función eliminarVenta completa:
     const eliminarVenta = async (venta) => {
-      try {
-        // ✅ ACTUALIZADO: Ruta relativa
-        const res = await fetch(`/api/ventas/${venta.id}`, {
-          method: 'DELETE', headers: { 'Content-Type': 'application/json' }
-        });
-        if (res.ok || res.status === 204 || res.status === 200) {
-          setTodasLasVentas(prev => prev.filter(v => v.id !== venta.id));
-          setModalConfirmarEliminar(null);
-        } else if (res.status === 404) {
-          alert('❌ Venta no encontrada en el servidor');
-          setModalConfirmarEliminar(null);
-        } else if (res.status === 405) {
-          alert('❌ El backend no tiene DELETE habilitado.\nAgrega @DeleteMapping("/{id}") en tu VentaController.java');
-          setModalConfirmarEliminar(null);
-        } else {
-          alert(`❌ Error del servidor: ${res.status}`);
-          setModalConfirmarEliminar(null);
-        }
-      } catch(e) {
-        alert('❌ No se pudo conectar al backend.');
+    try {
+        await deleteVenta(venta.id);
+        setTodasLasVentas(prev => prev.filter(v => v.id !== venta.id));
         setModalConfirmarEliminar(null);
-      }
-    };
+    } catch (e) {
+        alert('❌ ' + e.message);
+        setModalConfirmarEliminar(null);
+    }
+};
 
     // ── Stats inventario ──
     const totalProductos     = productos.length;
