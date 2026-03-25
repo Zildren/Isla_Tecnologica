@@ -1,10 +1,7 @@
-// src/services/authService.js
+// ✅ Usar ruta relativa (MISMO dominio)
+const API_URL = "/api/auth/login";
 
-// 🔥 Ruta relativa (frontend + backend en el mismo dominio)
-const API_URL = '/api/auth/login';
-
-// 🔍 Debug
-console.log("🔗 API_URL:", window.location.origin + API_URL);
+console.log("🔗 LOGIN URL:", window.location.origin + API_URL);
 
 export const loginUsuario = async (matricula, password) => {
     try {
@@ -14,7 +11,6 @@ export const loginUsuario = async (matricula, password) => {
             body: JSON.stringify({ matricula, password })
         });
 
-        // 🔥 Manejo de errores del servidor
         if (!response.ok) {
             const errorText = await response.text();
             console.error("❌ Error del servidor:", errorText);
@@ -26,7 +22,7 @@ export const loginUsuario = async (matricula, password) => {
         }
 
         const data = await response.json();
-        console.log("✅ Respuesta login:", data);
+        console.log("✅ LOGIN OK:", data);
 
         return data;
 

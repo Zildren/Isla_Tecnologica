@@ -1,12 +1,8 @@
-// 🔥 URL del backend desde Railway
-const BASE_URL = process.env.REACT_APP_API_URL;
-
-// Endpoint completo
-const API_URL = `${BASE_URL}/api/productos`;
+// ✅ Ruta relativa (MISMO dominio en Railway)
+const API_URL = "/api/productos";
 
 // 🔍 DEBUG
-console.log("🌐 BASE_URL:", BASE_URL);
-console.log("📦 API PRODUCTOS:", API_URL);
+console.log("📦 API PRODUCTOS:", window.location.origin + API_URL);
 
 // ✅ Obtener productos
 export const obtenerProductos = async () => {
@@ -18,7 +14,10 @@ export const obtenerProductos = async () => {
             throw new Error(errorText || "Error al obtener productos");
         }
 
-        return await response.json();
+        const data = await response.json();
+        console.log("✅ Productos:", data);
+
+        return data;
     } catch (error) {
         console.error("❌ Error al obtener productos:", error);
         throw new Error("No se pudo conectar al backend");
@@ -32,6 +31,8 @@ export const guardarProducto = async (producto) => {
         const url = esEdicion ? `${API_URL}/${producto.id}` : API_URL;
         const method = esEdicion ? "PUT" : "POST";
 
+        console.log("📤 Enviando producto a:", window.location.origin + url);
+
         const response = await fetch(url, {
             method,
             headers: { "Content-Type": "application/json" },
@@ -43,7 +44,10 @@ export const guardarProducto = async (producto) => {
             throw new Error(errorText || "Error al guardar producto");
         }
 
-        return await response.json();
+        const data = await response.json();
+        console.log("✅ Producto guardado:", data);
+
+        return data;
     } catch (error) {
         console.error("❌ Error al guardar producto:", error);
         throw error;
@@ -53,11 +57,17 @@ export const guardarProducto = async (producto) => {
 // ✅ Eliminar producto
 export const eliminarProducto = async (id) => {
     try {
-        const response = await fetch(`${API_URL}/${id}`, {
+        const url = `${API_URL}/${id}`;
+        console.log("🗑 Eliminando producto:", window.location.origin + url);
+
+        const response = await fetch(url, {
             method: "DELETE"
         });
 
-        if (response.ok || response.status === 204) return true;
+        if (response.ok || response.status === 204) {
+            console.log("✅ Producto eliminado");
+            return true;
+        }
 
         if (response.status === 404) throw new Error("Producto no encontrado");
         if (response.status === 405) throw new Error("DELETE no permitido en el backend");
