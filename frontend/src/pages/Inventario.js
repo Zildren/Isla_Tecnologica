@@ -264,9 +264,12 @@ const Inventario = () => {
 
   // ── Usuarios ──
   const API_USUARIOS = `${API_BASE}/api/usuarios`;
-  const [usuarios, setUsuarios]     = useState([]);
-  const [formUser, setFormUser]     = useState({ matricula:'', password:'', rol:'VENDEDOR' });
+  const [usuarios, setUsuarios]         = useState([]);
+  const [formUser, setFormUser]         = useState({ matricula:'', password:'', rol:'VENDEDOR' });
   const [cargandoUser, setCargandoUser] = useState(false);
+  // ✅ NUEVO: estados para carga y error de usuarios
+  const [cargandoUsuarios, setCargandoUsuarios] = useState(false);
+  const [errorUsuarios, setErrorUsuarios]       = useState('');
 
   // ── Gastos ──
   const [gastos, setGastos] = useState(() => {
@@ -413,36 +416,74 @@ const Inventario = () => {
     navigate('/');
   };
 
-  // ── Usuarios helpers ──
+  // ══════════════════════════════════════════════
+  // ✅ USUARIOS HELPERS — con manejo de estado completo
+  // ══════════════════════════════════════════════
   const cargarUsuarios = async () => {
-    try { const r = await fetch(API_USUARIOS); setUsuarios(await r.json()); }
-    catch(e) { console.error('Error cargando usuarios:', e); }
+    setCargandoUsuarios(true);
+    setErrorUsuarios('');
+    try {
+      const r = await fetch(API_USUARIOS, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      });
+      if (!r.ok) throw new Error(`Error del servidor: HTTP ${r.status}`);
+      const data = await r.json();
+      setUsuarios(Array.isArray(data) ? data : []);
+    } catch(e) {
+      console.error('Error cargando usuarios:', e);
+      setErrorUsuarios(e.message || 'No se pudo conectar al backend.');
+      setUsuarios([]);
+    } finally {
+      setCargandoUsuarios(false);
+    }
   };
 
   const agregarUsuario = async () => {
     if (!formUser.matricula || !formUser.password) return alert('Llena todos los campos');
     setCargandoUser(true);
     try {
-      await fetch(API_USUARIOS, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(formUser) });
+      const r = await fetch(API_USUARIOS, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formUser),
+      });
+      if (!r.ok) {
+        const msg = await r.text();
+        throw new Error(msg || `HTTP ${r.status}`);
+      }
       setFormUser({ matricula:'', password:'', rol:'VENDEDOR' });
       cargarUsuarios();
-    } catch(e) { alert('Error al agregar usuario'); }
-    finally { setCargandoUser(false); }
+    } catch(e) {
+      alert(`❌ Error al agregar usuario: ${e.message}`);
+    } finally {
+      setCargandoUser(false);
+    }
   };
 
   const toggleBloqueo = async (id, bloqueado) => {
     try {
-      await fetch(`${API_USUARIOS}/${id}/bloquear`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ bloqueado: !bloqueado }) });
+      const r = await fetch(`${API_USUARIOS}/${id}/bloquear`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bloqueado: !bloqueado }),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       cargarUsuarios();
-    } catch(e) { alert('Error al cambiar estado'); }
+    } catch(e) {
+      alert(`❌ Error al cambiar estado: ${e.message}`);
+    }
   };
 
   const eliminarUsuario = async (id, matriculaU) => {
     if (!window.confirm(`¿Eliminar al usuario "${matriculaU}"?`)) return;
     try {
-      await fetch(`${API_USUARIOS}/${id}`, { method:'DELETE' });
+      const r = await fetch(`${API_USUARIOS}/${id}`, { method: 'DELETE' });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       cargarUsuarios();
-    } catch(e) { alert('Error al eliminar'); }
+    } catch(e) {
+      alert(`❌ Error al eliminar: ${e.message}`);
+    }
   };
 
   // ── Ventas helpers ──
@@ -894,7 +935,11 @@ const Inventario = () => {
                   <span className="sb-icon">📈</span>
                   {!collapsed && <span className="sb-label">Reportes</span>}
                 </button>
-                <button className={`sb-item ${tab==='usuarios' ? 'active' : ''}`} onClick={() => { setTab('usuarios'); cargarUsuarios(); }} title={collapsed ? 'Usuarios' : ''}>
+                <button
+                  className={`sb-item ${tab==='usuarios' ? 'active' : ''}`}
+                  onClick={() => { setTab('usuarios'); cargarUsuarios(); }}
+                  title={collapsed ? 'Usuarios' : ''}
+                >
                   <span className="sb-icon">👥</span>
                   {!collapsed && <span className="sb-label">Usuarios</span>}
                 </button>
@@ -959,6 +1004,12 @@ const Inventario = () => {
                   Total gastado: <strong>${totalGastosGeneral.toFixed(2)}</strong>
                 </div>
               )}
+              {/* ✅ NUEVO: botón actualizar en tab usuarios */}
+              {tab === 'usuarios' && (
+                <button className="btn ghost" style={{fontSize:12, padding:'7px 14px'}} onClick={cargarUsuarios} disabled={cargandoUsuarios}>
+                  {cargandoUsuarios ? '⏳ Cargando...' : '🔄 Actualizar'}
+                </button>
+              )}
             </div>
           </div>
 
@@ -986,8 +1037,6 @@ const Inventario = () => {
                       <input className="inp" style={{width:85}} type="number" placeholder="Stock" value={nuevoProd.stock} onChange={e => setNuevoProd({...nuevoProd, stock:parseInt(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Costo $" value={nuevoProd.precioCompra} onChange={e => setNuevoProd({...nuevoProd, precioCompra:parseFloat(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Venta $" value={nuevoProd.precioVenta} onChange={e => setNuevoProd({...nuevoProd, precioVenta:parseFloat(e.target.value)})} required />
-
-                      {/* ✅ SELECT DE CATEGORÍA */}
                       <select
                         className="inp"
                         style={{minWidth:160}}
@@ -1925,17 +1974,35 @@ const Inventario = () => {
           )}
 
           {/* ════════════════════════════════
-              TAB: USUARIOS
+              TAB: USUARIOS  ✅ ACTUALIZADO
           ════════════════════════════════ */}
           {tab === 'usuarios' && esAdmin && (
             <>
               <div className="prod-form" style={{marginBottom:22}}>
                 <div className="prod-form-title">➕ Agregar Nuevo Usuario</div>
                 <div className="prod-form-grid" style={{alignItems:'flex-end'}}>
-                  <div><label className="rep-label" style={{display:'block',marginBottom:6}}>Matrícula</label><input className="inp" placeholder="Ej: juan01" value={formUser.matricula} onChange={e => setFormUser({...formUser,matricula:e.target.value})} /></div>
-                  <div><label className="rep-label" style={{display:'block',marginBottom:6}}>Contraseña</label><input className="inp" type="text" placeholder="Contraseña" value={formUser.password} onChange={e => setFormUser({...formUser,password:e.target.value})} /></div>
-                  <div><label className="rep-label" style={{display:'block',marginBottom:6}}>Rol</label><select className="inp" value={formUser.rol} onChange={e => setFormUser({...formUser,rol:e.target.value})}><option value="VENDEDOR">VENDEDOR</option><option value="ADMIN">ADMIN</option></select></div>
-                  <button className="btn green" onClick={agregarUsuario} disabled={cargandoUser}>{cargandoUser?'Guardando...':'✅ Agregar'}</button>
+                  <div>
+                    <label className="rep-label" style={{display:'block',marginBottom:6}}>Matrícula</label>
+                    <input className="inp" placeholder="Ej: juan01" value={formUser.matricula} onChange={e => setFormUser({...formUser,matricula:e.target.value})}
+                      onKeyDown={e => { if (e.key === 'Enter') agregarUsuario(); }}
+                    />
+                  </div>
+                  <div>
+                    <label className="rep-label" style={{display:'block',marginBottom:6}}>Contraseña</label>
+                    <input className="inp" type="text" placeholder="Contraseña" value={formUser.password} onChange={e => setFormUser({...formUser,password:e.target.value})}
+                      onKeyDown={e => { if (e.key === 'Enter') agregarUsuario(); }}
+                    />
+                  </div>
+                  <div>
+                    <label className="rep-label" style={{display:'block',marginBottom:6}}>Rol</label>
+                    <select className="inp" value={formUser.rol} onChange={e => setFormUser({...formUser,rol:e.target.value})}>
+                      <option value="VENDEDOR">VENDEDOR</option>
+                      <option value="ADMIN">ADMIN</option>
+                    </select>
+                  </div>
+                  <button className="btn green" onClick={agregarUsuario} disabled={cargandoUser}>
+                    {cargandoUser ? '⏳ Guardando...' : '✅ Agregar'}
+                  </button>
                 </div>
               </div>
 
@@ -1946,39 +2013,135 @@ const Inventario = () => {
                 <div className="stat-card"><div className="stat-label">Bloqueados</div><div className="stat-val c-amber">{usuarios.filter(u=>u.bloqueado).length}</div></div>
               </div>
 
-              <div className="tbl-wrap">
-                <table className="tbl">
-                  <thead><tr><th>ID</th><th>Matrícula</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
-                  <tbody>
-                    {usuarios.length > 0 ? usuarios.map(u => (
-                      <tr key={u.id}>
-                        <td className="mono" style={{color:'#4b5563'}}>{u.id}</td>
-                        <td style={{fontWeight:600}}>{u.matricula}</td>
-                        <td>
-                          <span className="inv-badge" style={{background:u.rol==='ADMIN'?'rgba(79,158,255,.15)':'rgba(34,197,94,.15)',border:`1px solid ${u.rol==='ADMIN'?'rgba(79,158,255,.35)':'rgba(34,197,94,.35)'}`,color:u.rol==='ADMIN'?'#4f9eff':'#34d399',fontSize:11,padding:'3px 10px',borderRadius:20,fontFamily:'JetBrains Mono,monospace',fontWeight:700}}>
-                            {u.rol==='ADMIN'?'🔑':'👤'} {u.rol}
-                          </span>
-                        </td>
-                        <td>
-                          <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:700,fontFamily:'JetBrains Mono,monospace',background:u.bloqueado?'rgba(239,68,68,.12)':'rgba(34,197,94,.12)',color:u.bloqueado?'#ef4444':'#22c55e',border:`1px solid ${u.bloqueado?'rgba(239,68,68,.25)':'rgba(34,197,94,.25)'}`}}>
-                            {u.bloqueado?'🔒 Bloqueado':'✅ Activo'}
-                          </span>
-                        </td>
-                        <td>
-                          <div style={{display:'flex',gap:8}}>
-                            <button className={`btn ${u.bloqueado?'green':'orange'}`} style={{padding:'5px 12px',fontSize:12}} onClick={() => toggleBloqueo(u.id,u.bloqueado)}>
-                              {u.bloqueado?'🔓 Desbloquear':'🔒 Bloquear'}
-                            </button>
-                            <button className="btn red" style={{padding:'5px 12px',fontSize:12,background:'#ef4444',color:'#fff'}} onClick={() => eliminarUsuario(u.id,u.matricula)}>🗑️ Eliminar</button>
-                          </div>
-                        </td>
-                      </tr>
-                    )) : (
-                      <tr><td colSpan={5} style={{padding:'40px',textAlign:'center',color:'#374151',fontSize:14}}>No hay usuarios registrados.</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              {/* ✅ Estado de carga */}
+              {cargandoUsuarios ? (
+                <div style={{
+                  textAlign:'center', padding:'60px 20px',
+                  color:'#6b7280', fontSize:14,
+                  background:'#0d0f14', borderRadius:12,
+                  border:'1px solid #1e2230',
+                  display:'flex', flexDirection:'column', alignItems:'center', gap:14
+                }}>
+                  <div style={{
+                    width:36, height:36, borderRadius:'50%',
+                    border:'3px solid #1e2230',
+                    borderTopColor:'#4f9eff',
+                    animation:'spin 0.8s linear infinite'
+                  }}/>
+                  <span style={{fontFamily:'JetBrains Mono, monospace', fontSize:13}}>Cargando usuarios...</span>
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                </div>
+              ) : errorUsuarios ? (
+                /* ✅ Estado de error con diagnóstico */
+                <div style={{
+                  padding:'28px 24px',
+                  background:'rgba(239,68,68,.07)',
+                  border:'1px solid rgba(239,68,68,.25)',
+                  borderRadius:12,
+                  display:'flex', flexDirection:'column', gap:14
+                }}>
+                  <div style={{display:'flex', alignItems:'center', gap:12}}>
+                    <span style={{fontSize:22}}>❌</span>
+                    <div>
+                      <div style={{fontWeight:700, color:'#f87171', fontSize:14, marginBottom:4}}>No se pudo cargar la lista de usuarios</div>
+                      <div style={{fontSize:12, color:'#9ca3af', fontFamily:'JetBrains Mono'}}>{errorUsuarios}</div>
+                    </div>
+                  </div>
+                  <div style={{
+                    padding:'12px 16px',
+                    background:'rgba(0,0,0,.2)',
+                    borderRadius:8,
+                    fontSize:12, color:'#6b7280',
+                    fontFamily:'JetBrains Mono, monospace',
+                    lineHeight:1.8
+                  }}>
+                    <div style={{color:'#fbbf24', fontWeight:700, marginBottom:6}}>💡 Posibles causas:</div>
+                    <div>1. El backend no está corriendo en <span style={{color:'#4f9eff'}}>{API_BASE}</span></div>
+                    <div>2. Falta <span style={{color:'#34d399'}}>@CrossOrigin</span> en <span style={{color:'#a78bfa'}}>UsuarioController.java</span></div>
+                    <div>3. El endpoint <span style={{color:'#4f9eff'}}>/api/usuarios</span> no está disponible</div>
+                  </div>
+                  <div style={{display:'flex', gap:10}}>
+                    <button
+                      className="btn blue"
+                      style={{padding:'9px 20px', fontSize:13}}
+                      onClick={cargarUsuarios}
+                    >
+                      🔄 Reintentar
+                    </button>
+                    <button
+                      className="btn ghost"
+                      style={{padding:'9px 20px', fontSize:12}}
+                      onClick={() => window.open(`${API_BASE}/api/usuarios`, '_blank')}
+                    >
+                      🔗 Probar endpoint
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* ✅ Tabla normal */
+                <div className="tbl-wrap">
+                  <table className="tbl">
+                    <thead>
+                      <tr><th>ID</th><th>Matrícula</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr>
+                    </thead>
+                    <tbody>
+                      {usuarios.length > 0 ? usuarios.map(u => (
+                        <tr key={u.id}>
+                          <td className="mono" style={{color:'#4b5563'}}>{u.id}</td>
+                          <td style={{fontWeight:600}}>{u.matricula}</td>
+                          <td>
+                            <span className="inv-badge" style={{
+                              background: u.rol==='ADMIN' ? 'rgba(79,158,255,.15)' : 'rgba(34,197,94,.15)',
+                              border: `1px solid ${u.rol==='ADMIN' ? 'rgba(79,158,255,.35)' : 'rgba(34,197,94,.35)'}`,
+                              color: u.rol==='ADMIN' ? '#4f9eff' : '#34d399',
+                              fontSize:11, padding:'3px 10px', borderRadius:20,
+                              fontFamily:'JetBrains Mono,monospace', fontWeight:700
+                            }}>
+                              {u.rol==='ADMIN' ? '🔑' : '👤'} {u.rol}
+                            </span>
+                          </td>
+                          <td>
+                            <span style={{
+                              display:'inline-flex', alignItems:'center', gap:5,
+                              padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:700,
+                              fontFamily:'JetBrains Mono,monospace',
+                              background: u.bloqueado ? 'rgba(239,68,68,.12)' : 'rgba(34,197,94,.12)',
+                              color: u.bloqueado ? '#ef4444' : '#22c55e',
+                              border: `1px solid ${u.bloqueado ? 'rgba(239,68,68,.25)' : 'rgba(34,197,94,.25)'}`
+                            }}>
+                              {u.bloqueado ? '🔒 Bloqueado' : '✅ Activo'}
+                            </span>
+                          </td>
+                          <td>
+                            <div style={{display:'flex', gap:8}}>
+                              <button
+                                className={`btn ${u.bloqueado ? 'green' : 'orange'}`}
+                                style={{padding:'5px 12px', fontSize:12}}
+                                onClick={() => toggleBloqueo(u.id, u.bloqueado)}
+                              >
+                                {u.bloqueado ? '🔓 Desbloquear' : '🔒 Bloquear'}
+                              </button>
+                              <button
+                                className="btn red"
+                                style={{padding:'5px 12px', fontSize:12, background:'#ef4444', color:'#fff'}}
+                                onClick={() => eliminarUsuario(u.id, u.matricula)}
+                              >
+                                🗑️ Eliminar
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )) : (
+                        <tr>
+                          <td colSpan={5} style={{padding:'50px', textAlign:'center', color:'#374151', fontSize:14}}>
+                            No hay usuarios registrados. Agrega el primero arriba.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </>
           )}
         </main>
