@@ -1,18 +1,23 @@
-// ✅ Endpoint correcto usando ruta relativa
-const API_URL = '/api/productos';
+// 🔥 URL del backend desde Railway
+const BASE_URL = process.env.REACT_APP_API_URL;
 
-// 🔍 DEBUG (verifica que la URL sea la esperada)
-console.log("API_URL (relativa):", API_URL);
-console.log("URL completa de la petición:", window.location.origin + API_URL);
+// Endpoint completo
+const API_URL = `${BASE_URL}/api/productos`;
+
+// 🔍 DEBUG
+console.log("🌐 BASE_URL:", BASE_URL);
+console.log("📦 API PRODUCTOS:", API_URL);
 
 // ✅ Obtener productos
 export const obtenerProductos = async () => {
     try {
         const response = await fetch(API_URL);
+
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(errorText || "Error al obtener productos");
         }
+
         return await response.json();
     } catch (error) {
         console.error("❌ Error al obtener productos:", error);
@@ -37,6 +42,7 @@ export const guardarProducto = async (producto) => {
             const errorText = await response.text();
             throw new Error(errorText || "Error al guardar producto");
         }
+
         return await response.json();
     } catch (error) {
         console.error("❌ Error al guardar producto:", error);
@@ -47,7 +53,9 @@ export const guardarProducto = async (producto) => {
 // ✅ Eliminar producto
 export const eliminarProducto = async (id) => {
     try {
-        const response = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+        const response = await fetch(`${API_URL}/${id}`, {
+            method: "DELETE"
+        });
 
         if (response.ok || response.status === 204) return true;
 

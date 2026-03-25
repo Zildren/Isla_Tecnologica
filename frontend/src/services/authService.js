@@ -1,14 +1,10 @@
 // src/services/authService.js
 
-// 🔥 URL del backend desde Railway
-const BASE_URL = process.env.REACT_APP_API_URL;
+// 🔥 Ruta relativa (frontend + backend en el mismo dominio)
+const API_URL = '/api/auth/login';
 
-// Endpoint completo
-const API_URL = `${BASE_URL}/api/auth/login`;
-
-// Debug
-console.log("🌐 BASE_URL:", BASE_URL);
-console.log("🔗 API_URL:", API_URL);
+// 🔍 Debug
+console.log("🔗 API_URL:", window.location.origin + API_URL);
 
 export const loginUsuario = async (matricula, password) => {
     try {
@@ -18,19 +14,25 @@ export const loginUsuario = async (matricula, password) => {
             body: JSON.stringify({ matricula, password })
         });
 
+        // 🔥 Manejo de errores del servidor
         if (!response.ok) {
             const errorText = await response.text();
             console.error("❌ Error del servidor:", errorText);
+
             return {
                 status: "ERROR_SERVIDOR",
                 detalles: errorText
             };
         }
 
-        return await response.json();
+        const data = await response.json();
+        console.log("✅ Respuesta login:", data);
+
+        return data;
 
     } catch (error) {
         console.error("❌ Error de conexión:", error);
+
         return {
             status: "ERROR_CONEXION",
             rol: ""
