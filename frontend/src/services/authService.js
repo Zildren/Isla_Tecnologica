@@ -1,7 +1,7 @@
 const BASE_URL = process.env.REACT_APP_API_URL;
 const API_URL = `${BASE_URL}/api/auth/login`;
 
-// 🔍 Debug (para verificar que ya no sea undefined)
+// 🔍 Debug
 console.log("BASE_URL:", BASE_URL);
 console.log("Login API:", API_URL);
 
@@ -15,7 +15,6 @@ export const loginUsuario = async (matricula, password) => {
             body: JSON.stringify({ matricula, password })
         });
 
-        // ❌ Error del servidor
         if (!response.ok) {
             const errorText = await response.text();
             console.error("❌ Error del servidor:", errorText);
@@ -26,7 +25,6 @@ export const loginUsuario = async (matricula, password) => {
             };
         }
 
-        // ✅ Respuesta correcta
         return await response.json();
 
     } catch (error) {
