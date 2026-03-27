@@ -889,6 +889,17 @@ const Inventario = () => {
                       <input className="inp" style={{width:85}} type="number" placeholder="Stock" value={nuevoProd.stock} onChange={e => setNuevoProd({...nuevoProd, stock:parseInt(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Costo $" value={nuevoProd.precioCompra} onChange={e => setNuevoProd({...nuevoProd, precioCompra:parseFloat(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Venta $" value={nuevoProd.precioVenta} onChange={e => setNuevoProd({...nuevoProd, precioVenta:parseFloat(e.target.value)})} required />
+                      {/* ✅ NUEVO: Selector de categoría */}
+                  <select
+                      className="inp"
+                       style={{minWidth:150}}
+                       value={nuevoProd.categoria}
+                       onChange={e => setNuevoProd({...nuevoProd, categoria: e.target.value})}
+                    >
+                    {['Fundas', 'Cargadores', 'Audífonos', 'Cables', 'Accesorios', 'Pantallas', 'Baterías', 'Otros'].map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                  </select>
                     </div>
                     <div style={{marginTop:12}}>
                       <div style={{fontSize:11, color:'#6b7280', marginBottom:6, fontFamily:'JetBrains Mono'}}>🖼️ Imagen del producto</div>
