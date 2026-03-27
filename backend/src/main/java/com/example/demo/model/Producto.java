@@ -20,7 +20,7 @@ public class Producto {
     private Double precioVenta;
     private String categoria;
 
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     private String imagen;
 
     private String registradoPorMatricula;
