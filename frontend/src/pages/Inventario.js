@@ -180,6 +180,9 @@ const CATEGORIAS_GASTO = [
   'Marketing / Publicidad', 'Mantenimiento', 'Equipo / Herramientas', 'Otros',
 ];
 
+// ── Estado vacío reutilizable para nuevo producto ──
+const PROD_VACIO = { codigo:'', nombre:'', stock:0, precioCompra:0, precioVenta:0, categoria:'', imagen:'' };
+
 const Inventario = () => {
   const navigate = useNavigate();
 
@@ -187,7 +190,7 @@ const Inventario = () => {
   const [productos, setProductos]   = useState([]);
   const [busqueda, setBusqueda]     = useState('');
   const [editandoId, setEditandoId] = useState(null);
-  const [nuevoProd, setNuevoProd]   = useState({ codigo:'', nombre:'', stock:0, precioCompra:0, precioVenta:0, categoria:'Fundas', imagen:'' });
+  const [nuevoProd, setNuevoProd]   = useState(PROD_VACIO);
   const [editandoStockId, setEditandoStockId] = useState(null);
   const [nuevoStock, setNuevoStock]           = useState('');
   const [limiteStock, setLimiteStock] = useState(() => parseInt(localStorage.getItem('limiteStock') || '5'));
@@ -246,7 +249,7 @@ const Inventario = () => {
   const agregarGasto = () => {
     const desc  = nuevoGasto.descripcion.trim();
     const monto = parseFloat(nuevoGasto.monto);
-    if (!desc)                   return alert('Escribe una descripción');
+    if (!desc)                      return alert('Escribe una descripción');
     if (isNaN(monto) || monto <= 0) return alert('Ingresa un monto válido mayor a 0');
     persistirGastos([...gastos, {
       id: Date.now(), descripcion: desc, monto,
@@ -294,6 +297,9 @@ const Inventario = () => {
   const cargarProductos = async () => { const d = await obtenerProductos(); setProductos(d); };
   const cargarVentas    = async () => { const d = await obtenerVentas(); if (d) setTodasLasVentas(d); };
 
+  // ── Categorías de productos dinámicas desde BD ──
+  const categoriasProducto = [...new Set(productos.map(p => p.categoria).filter(Boolean))].sort();
+
   // ── Inventario helpers ──
   const productosFiltrados = productos.filter(p =>
     p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -307,7 +313,7 @@ const Inventario = () => {
       const resultado = await guardarProducto({ ...nuevoProd, id: editandoId, registradoPorMatricula: matricula });
       if (!resultado) { alert('❌ Error al guardar. Revisa la consola (F12 → Network).'); return; }
       alert(editandoId ? '✅ Producto actualizado' : '✅ Producto guardado');
-      setNuevoProd({ codigo:'', nombre:'', stock:0, precioCompra:0, precioVenta:0, categoria:'Fundas', imagen:'' });
+      setNuevoProd(PROD_VACIO);
       setEditandoId(null);
       cargarProductos();
     } catch (err) {
@@ -318,7 +324,7 @@ const Inventario = () => {
 
   const prepararEdicion = (p) => {
     setEditandoId(p.id);
-    setNuevoProd({ codigo:p.codigo, nombre:p.nombre, stock:p.stock, precioCompra:p.precioCompra, precioVenta:p.precioVenta, categoria:p.categoria, imagen:p.imagen||'' });
+    setNuevoProd({ codigo:p.codigo, nombre:p.nombre, stock:p.stock, precioCompra:p.precioCompra, precioVenta:p.precioVenta, categoria:p.categoria || '', imagen:p.imagen||'' });
   };
 
   const iniciarEditStock   = (p) => { setEditandoStockId(p.id); setNuevoStock(String(p.stock)); };
@@ -337,7 +343,6 @@ const Inventario = () => {
 
   const abrirAgregarStock = (p) => { setModalAgregarStock(p); setCantidadAgregar(''); };
 
-  // ✅ FIXED: usa deleteProducto del service (BASE_URL relativo, sin localhost)
   const eliminarProducto = async (p) => {
     if (!window.confirm(`¿Eliminar el producto "${p.nombre}"?\nEsta acción no se puede deshacer.`)) return;
     try {
@@ -492,7 +497,6 @@ const Inventario = () => {
     cargarVentas();
   };
 
-  // ✅ FIXED: usa deleteVenta del service (BASE_URL relativo, sin localhost)
   const eliminarVenta = async (venta) => {
     try {
       await deleteVenta(venta.id);
@@ -889,18 +893,22 @@ const Inventario = () => {
                       <input className="inp" style={{width:85}} type="number" placeholder="Stock" value={nuevoProd.stock} onChange={e => setNuevoProd({...nuevoProd, stock:parseInt(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Costo $" value={nuevoProd.precioCompra} onChange={e => setNuevoProd({...nuevoProd, precioCompra:parseFloat(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Venta $" value={nuevoProd.precioVenta} onChange={e => setNuevoProd({...nuevoProd, precioVenta:parseFloat(e.target.value)})} required />
-                      {/* ✅ NUEVO: Selector de categoría */}
-                  <select
-                      className="inp"
-                       style={{minWidth:150}}
-                       value={nuevoProd.categoria}
-                       onChange={e => setNuevoProd({...nuevoProd, categoria: e.target.value})}
-                    >
-                    {['Fundas', 'Cargadores', 'Audífonos', 'Cables', 'Accesorios', 'Pantallas', 'Baterías', 'Otros'].map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                                ))}
-                  </select>
+
+                      {/* ✅ Categoría dinámica desde BD */}
+                      <select
+                        className="inp"
+                        style={{minWidth:160}}
+                        value={nuevoProd.categoria}
+                        onChange={e => setNuevoProd({...nuevoProd, categoria: e.target.value})}
+                        required
+                      >
+                        <option value="">— Categoría —</option>
+                        {categoriasProducto.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
                     </div>
+
                     <div style={{marginTop:12}}>
                       <div style={{fontSize:11, color:'#6b7280', marginBottom:6, fontFamily:'JetBrains Mono'}}>🖼️ Imagen del producto</div>
                       <div style={{display:'flex', gap:10, alignItems:'flex-start'}}>
@@ -943,7 +951,11 @@ const Inventario = () => {
                     </div>
                     <div style={{display:'flex', gap:10, marginTop:14}}>
                       <button type="submit" className={`btn ${editandoId?'orange':'green'}`}>{editandoId ? 'Actualizar' : 'Guardar'}</button>
-                      {editandoId && <button type="button" className="btn ghost" onClick={() => { setEditandoId(null); setNuevoProd({codigo:'',nombre:'',stock:0,precioCompra:0,precioVenta:0,categoria:'Fundas',imagen:''}); }}>Cancelar</button>}
+                      {editandoId && (
+                        <button type="button" className="btn ghost" onClick={() => { setEditandoId(null); setNuevoProd(PROD_VACIO); }}>
+                          Cancelar
+                        </button>
+                      )}
                     </div>
                   </form>
                 </div>
