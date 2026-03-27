@@ -1,11 +1,23 @@
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
+import Inventario from './components/Inventario';
+
+const PrivateRoute = ({ children }) => {
+  const usuario = localStorage.getItem('usuarioLogueado');
+  return usuario ? children : <Navigate to="/" replace />;
+};
 
 function App() {
   return (
-    <div>
-      {/* Aquí le decimos a React que muestre tu pantalla de Login */}
-      <Login /> 
-    </div>
+    <Routes>
+      <Route path="/" element={<Login />} />
+      <Route path="/inventario" element={
+        <PrivateRoute>
+          <Inventario />
+        </PrivateRoute>
+      } />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
