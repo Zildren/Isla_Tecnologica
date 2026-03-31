@@ -1,7 +1,4 @@
-// ✅ Usar ruta relativa (MISMO dominio)
 const API_URL = "/api/auth/login";
-
-console.log("🔗 LOGIN URL:", window.location.origin + API_URL);
 
 export const loginUsuario = async (matricula, password) => {
     try {
@@ -11,27 +8,34 @@ export const loginUsuario = async (matricula, password) => {
             body: JSON.stringify({ matricula, password })
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error("❌ Error del servidor:", errorText);
+        const data = await response.json();
 
-            return {
-                status: "ERROR_SERVIDOR",
-                detalles: errorText
-            };
+        if (!response.ok) {
+            console.error("❌ Error del servidor:", data);
+            return { status: "ERROR_SERVIDOR", mensaje: data.mensaje };
         }
 
-        const data = await response.json();
         console.log("✅ LOGIN OK:", data);
+
+        // Guarda el JWT y datos de sesión
+        if (data.token) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('empresaId', String(data.empresaId));
+            localStorage.setItem('rolUsuario', data.rol);
+            localStorage.setItem('usuarioLogueado', data.matricula);
+        }
 
         return data;
 
     } catch (error) {
         console.error("❌ Error de conexión:", error);
-
-        return {
-            status: "ERROR_CONEXION",
-            rol: ""
-        };
+        return { status: "ERROR_CONEXION" };
     }
+};
+
+export const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('empresaId');
+    localStorage.removeItem('rolUsuario');
+    localStorage.removeItem('usuarioLogueado');
 };
