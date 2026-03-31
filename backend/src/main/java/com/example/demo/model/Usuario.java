@@ -5,7 +5,6 @@ import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,36 +30,20 @@ public class Usuario implements UserDetails {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean bloqueado = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    // ✅ EAGER para que cargue la empresa sin transacción activa
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "empresa_id", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Empresa empresa;
 
-    // ── UserDetails ──────────────────────────────
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + rol));
     }
 
-    @Override
-    public String getUsername() {
-        return matricula; // 🔑 matrícula es el username
-    }
-
-    @Override
-    public String getPassword() {
-        return password;
-    }
-
-    @Override
-    public boolean isAccountNonExpired()    { return true; }
-
-    @Override
-    public boolean isAccountNonLocked()     { return !bloqueado; }
-
-    @Override
-    public boolean isCredentialsNonExpired(){ return true; }
-
-    @Override
-    public boolean isEnabled()              { return !bloqueado; }
+    @Override public String getUsername()               { return matricula; }
+    @Override public String getPassword()               { return password; }
+    @Override public boolean isAccountNonExpired()      { return true; }
+    @Override public boolean isAccountNonLocked()       { return !bloqueado; }
+    @Override public boolean isCredentialsNonExpired()  { return true; }
+    @Override public boolean isEnabled()                { return !bloqueado; }
 }
