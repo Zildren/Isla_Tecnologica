@@ -31,13 +31,12 @@ const Login = () => {
             const resultado = await loginUsuario(matriculaLimpia, passwordLimpia);
             const status = resultado.status?.trim().toUpperCase();
 
-            if (status === "BIENVENIDO_ADMIN") {
+            if (status === "BIENVENIDO_ADMIN" || status === "BIENVENIDO_VENDEDOR") {
+                // 🔑 Guardar token y empresaId
+                localStorage.setItem('token', resultado.token);
+                localStorage.setItem('empresaId', resultado.empresaId);
                 localStorage.setItem('usuarioLogueado', matriculaLimpia);
-                localStorage.setItem('rolUsuario', 'ADMIN');
-                navigate("/inventario");
-            } else if (status === "BIENVENIDO_VENDEDOR") {
-                localStorage.setItem('usuarioLogueado', matriculaLimpia);
-                localStorage.setItem('rolUsuario', 'VENDEDOR');
+                localStorage.setItem('rolUsuario', status === "BIENVENIDO_ADMIN" ? 'ADMIN' : 'VENDEDOR');
                 navigate("/inventario");
             } else {
                 alert("Matrícula o contraseña incorrecta.");
