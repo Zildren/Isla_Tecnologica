@@ -5,6 +5,7 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Data
@@ -32,6 +33,7 @@ public class Gasto {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "empresa_id")
+    @JsonIgnore
     private Empresa empresa;
 
     @PrePersist
