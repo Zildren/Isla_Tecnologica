@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
-import Inventario from './components/Inventario';
+import Inventario from './pages/Inventario';
 
 const PrivateRoute = ({ children }) => {
   const usuario = localStorage.getItem('usuarioLogueado');
