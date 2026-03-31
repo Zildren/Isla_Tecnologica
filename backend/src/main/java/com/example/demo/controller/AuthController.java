@@ -13,8 +13,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-
-// 🔥 CORS simple (evita errores)
 @CrossOrigin(origins = "*")
 public class AuthController {
 
@@ -22,49 +20,58 @@ public class AuthController {
     private UsuarioRepository usuarioRepository;
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody Usuario user) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody Usuario user) {
 
         String matriculaRecibida = user.getMatricula() != null ? user.getMatricula().trim() : "";
         String passwordRecibida  = user.getPassword()  != null ? user.getPassword().trim()  : "";
 
         System.out.println("--- PRUEBA DE ACCESO ---");
-        System.out.println("Matricula: [" + matriculaRecibida + "] / Password: [" + passwordRecibida + "]");
+        System.out.println("Matricula: [" + matriculaRecibida + "]");
 
         return usuarioRepository.findByMatricula(matriculaRecibida)
                 .map(u -> {
 
-                    System.out.println("Encontrado en DB: [" + u.getMatricula() + "] / Rol: [" + u.getRol() + "]");
-
                     if (u.getPassword().trim().equals(passwordRecibida)) {
 
-                        // ✅ Usuario bloqueado
+                        // 🔒 Usuario bloqueado
                         if (Boolean.TRUE.equals(u.getBloqueado())) {
-                            Map<String, String> bloqueado = new HashMap<>();
+                            Map<String, Object> bloqueado = new HashMap<>();
                             bloqueado.put("status", "BLOQUEADO");
-                            bloqueado.put("rol", "");
                             return new ResponseEntity<>(bloqueado, HttpStatus.FORBIDDEN);
                         }
 
+                        // 🔥 RESPUESTA SEGÚN ROL
                         String respuesta = "ADMIN".equalsIgnoreCase(u.getRol())
                                 ? "BIENVENIDO_ADMIN"
                                 : "BIENVENIDO_VENDEDOR";
 
-                        Map<String, String> ok = new HashMap<>();
+                        // 🚀 RESPUESTA COMPLETA (CLAVE DEL SAAS)
+                        Map<String, Object> ok = new HashMap<>();
                         ok.put("status", respuesta);
-                        ok.put("rol", u.getRol());
+
+                        Map<String, Object> usuarioData = new HashMap<>();
+                        usuarioData.put("id", u.getId());
+                        usuarioData.put("matricula", u.getMatricula());
+                        usuarioData.put("rol", u.getRol());
+
+                        // 🏢 EMPRESA (LO MÁS IMPORTANTE)
+                        Map<String, Object> empresaData = new HashMap<>();
+                        empresaData.put("id", u.getEmpresa().getId());
+
+                        usuarioData.put("empresa", empresaData);
+
+                        ok.put("usuario", usuarioData);
 
                         return new ResponseEntity<>(ok, HttpStatus.OK);
                     }
 
-                    Map<String, String> error = new HashMap<>();
+                    Map<String, Object> error = new HashMap<>();
                     error.put("status", "ERROR_PASSWORD");
-                    error.put("rol", "");
                     return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
                 })
                 .orElseGet(() -> {
-                    Map<String, String> noEncontrado = new HashMap<>();
+                    Map<String, Object> noEncontrado = new HashMap<>();
                     noEncontrado.put("status", "USUARIO_NO_ENCONTRADO");
-                    noEncontrado.put("rol", "");
                     return new ResponseEntity<>(noEncontrado, HttpStatus.NOT_FOUND);
                 });
     }

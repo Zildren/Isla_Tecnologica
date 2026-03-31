@@ -1,21 +1,26 @@
-// ✅ Detecta automáticamente el dominio (Railway o Local) para evitar ERR_CONNECTION_REFUSED
-const API_BASE = window.location.origin;
+// ✅ URL del backend (NO se modifica como pediste)
 const API_URL = "https://tu-backend-en-railway.app/api/usuarios";
 
+// 🏢 Empresa (temporal, luego viene del login)
+const EMPRESA_ID = 1;
+
 /**
- * Obtener todos los usuarios registrados
+ * Obtener usuarios por empresa
  */
 export const obtenerUsuarios = async () => {
     try {
-        const response = await fetch(API_URL);
+        const response = await fetch(`${API_URL}/empresa/${EMPRESA_ID}`);
+
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(errorText || "Error al obtener usuarios");
         }
+
         return await response.json();
+
     } catch (error) {
         console.error("Error al obtener usuarios:", error);
-        return []; 
+        return [];
     }
 };
 
@@ -27,18 +32,24 @@ export const agregarUsuario = async (usuario) => {
         const response = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(usuario)
+            body: JSON.stringify({
+                ...usuario,
+                empresa: {
+                    id: EMPRESA_ID
+                }
+            })
         });
-        
+
         if (!response.ok) {
-            // Captura errores específicos como "Matrícula duplicada" enviados desde Java
             const msg = await response.text();
             throw new Error(msg);
         }
+
         return await response.json();
+
     } catch (error) {
         console.error("Error al agregar usuario:", error);
-        throw error; 
+        throw error;
     }
 };
 
@@ -57,7 +68,9 @@ export const toggleBloqueoUsuario = async (id, bloqueadoActualmente) => {
             const errorText = await response.text();
             throw new Error(errorText || "No se pudo cambiar el estado del usuario");
         }
+
         return true;
+
     } catch (error) {
         console.error("Error al cambiar bloqueo:", error);
         return false;
@@ -77,18 +90,19 @@ export const eliminarUsuario = async (id) => {
             const errorText = await response.text();
             throw new Error(errorText || "Error en el servidor al eliminar usuario");
         }
-        
-        // Verifica si el backend devolvió un JSON o está vacío (204 No Content)
+
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.includes("application/json")) {
             return await response.json();
         }
+
         return { success: true };
+
     } catch (error) {
         console.error("Error al eliminar usuario:", error);
         throw error;
     }
 };
 
-// 🚩 Marca de control para verificar despliegue en consola (F12)
-console.log("Servicio de Usuarios cargado con rutas relativas: OK");
+// 🚩 Verificación en consola
+console.log("Servicio de Usuarios SaaS listo (multi-empresa activado) 🚀");
