@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { obtenerProductos, guardarProducto, eliminarProducto as deleteProducto } from '../services/productoService';
 import { obtenerVentas, registrarVenta, eliminarVenta as deleteVenta } from '../services/ventaService';
+import { obtenerGastos, registrarGasto, actualizarGasto, eliminarGasto as deleteGasto } from '../services/gastoService';
 import './Inventario.css';
 
 // ═══════════════════════════════════════════
@@ -235,9 +236,7 @@ const Inventario = () => {
   const [cargandoUser, setCargandoUser] = useState(false);
 
   // ── Gastos ──
-  const [gastos, setGastos] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('gastos_pos') || '[]'); } catch { return []; }
-  });
+  const [gastos, setGastos] = useState([]);
   const [nuevoGasto, setNuevoGasto] = useState({
     descripcion: '', monto: '', categoria: 'Operativo',
     fecha: new Date().toISOString().split('T')[0],
@@ -247,39 +246,63 @@ const Inventario = () => {
   const [modalEliminarGasto, setModalEliminarGasto] = useState(null);
   const [gastoEditando, setGastoEditando]           = useState(null);
 
-  const persistirGastos = (lista) => {
-    setGastos(lista);
-    localStorage.setItem('gastos_pos', JSON.stringify(lista));
+  const cargarGastos = async () => {
+    const data = await obtenerGastos();
+    setGastos(data.map(g => ({
+      ...g,
+      registradoPor: g.registradoPor,
+      // normaliza fecha para que el filtro funcione igual que antes
+      fecha: g.fecha, // ya viene como "yyyy-MM-dd" del backend
+    })));
   };
 
-  const agregarGasto = () => {
+  const agregarGasto = async () => {
     const desc  = nuevoGasto.descripcion.trim();
     const monto = parseFloat(nuevoGasto.monto);
     if (!desc)                      return alert('Escribe una descripción');
     if (isNaN(monto) || monto <= 0) return alert('Ingresa un monto válido mayor a 0');
-    persistirGastos([...gastos, {
-      id: Date.now(), descripcion: desc, monto,
-      categoria: nuevoGasto.categoria, fecha: nuevoGasto.fecha,
-      registradoPor: matricula, creadoEn: new Date().toISOString(),
-    }]);
-    setNuevoGasto({ descripcion:'', monto:'', categoria:'Operativo', fecha: new Date().toISOString().split('T')[0] });
+    try {
+      await registrarGasto({
+        descripcion: desc,
+        monto,
+        categoria: nuevoGasto.categoria,
+        fecha: nuevoGasto.fecha,
+        registradoPor: matricula,
+      });
+      setNuevoGasto({ descripcion:'', monto:'', categoria:'Operativo', fecha: new Date().toISOString().split('T')[0] });
+      cargarGastos();
+    } catch (e) {
+      alert('❌ Error al registrar gasto: ' + e.message);
+    }
   };
 
-  const guardarEdicionGasto = () => {
+  const guardarEdicionGasto = async () => {
     const monto = parseFloat(gastoEditando.monto);
     if (!gastoEditando.descripcion.trim()) return alert('Descripción requerida');
     if (isNaN(monto) || monto <= 0)        return alert('Monto inválido');
-    persistirGastos(gastos.map(g =>
-      g.id === gastoEditando.id
-        ? { ...g, descripcion: gastoEditando.descripcion.trim(), monto, categoria: gastoEditando.categoria, fecha: gastoEditando.fecha }
-        : g
-    ));
-    setGastoEditando(null);
+    try {
+      await actualizarGasto(gastoEditando.id, {
+        descripcion: gastoEditando.descripcion.trim(),
+        monto,
+        categoria: gastoEditando.categoria,
+        fecha: gastoEditando.fecha,
+      });
+      setGastoEditando(null);
+      cargarGastos();
+    } catch (e) {
+      alert('❌ Error al editar gasto: ' + e.message);
+    }
   };
 
-  const confirmarEliminarGasto = () => {
-    persistirGastos(gastos.filter(g => g.id !== modalEliminarGasto.id));
-    setModalEliminarGasto(null);
+  const confirmarEliminarGasto = async () => {
+    try {
+      await deleteGasto(modalEliminarGasto.id);
+      setModalEliminarGasto(null);
+      cargarGastos();
+    } catch (e) {
+      alert('❌ Error al eliminar: ' + e.message);
+      setModalEliminarGasto(null);
+    }
   };
 
   // ── Layout ──
@@ -298,6 +321,7 @@ const Inventario = () => {
     } else {
       cargarProductos();
       cargarVentas();
+      cargarGastos(); // 🔑 NUEVO
     }
   }, [navigate]);
 
@@ -885,9 +909,14 @@ const Inventario = () => {
               {tab === 'stock' && (
                 <button className="btn ghost" style={{fontSize:12, padding:'7px 14px'}} onClick={cargarProductos}>🔄 Actualizar</button>
               )}
-              {tab === 'gastos' && gastos.length > 0 && (
-                <div style={{fontSize:13, color:'#f87171', display:'flex', alignItems:'center', gap:6, fontFamily:'JetBrains Mono'}}>
-                  Total gastado: <strong>${totalGastosGeneral.toFixed(2)}</strong>
+              {tab === 'gastos' && (
+                <div style={{display:'flex', alignItems:'center', gap:12}}>
+                  {gastos.length > 0 && (
+                    <div style={{fontSize:13, color:'#f87171', display:'flex', alignItems:'center', gap:6, fontFamily:'JetBrains Mono'}}>
+                      Total gastado: <strong>${totalGastosGeneral.toFixed(2)}</strong>
+                    </div>
+                  )}
+                  <button className="btn ghost" style={{fontSize:12, padding:'7px 14px'}} onClick={cargarGastos}>🔄 Actualizar</button>
                 </div>
               )}
             </div>
