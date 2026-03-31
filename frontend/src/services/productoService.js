@@ -1,81 +1,78 @@
-// ✅ Ruta relativa (MISMO dominio en Railway)
-const API_URL = "/api/productos";
+const API_URL = '/api/productos';
 
-// 🔍 DEBUG
-console.log("📦 API PRODUCTOS:", window.location.origin + API_URL);
+console.log('📦 API PRODUCTOS:', window.location.origin + API_URL);
+
+// 🔑 Helper JWT
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${localStorage.getItem('token')}`,
+});
 
 // ✅ Obtener productos
 export const obtenerProductos = async () => {
-    try {
-        const response = await fetch(API_URL);
+  try {
+    const response = await fetch(API_URL, {
+      headers: authHeaders(), // 🔑
+    });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || "Error al obtener productos");
-        }
+    if (response.status === 401) { window.location.href = '/'; return []; }
+    if (!response.ok) throw new Error(await response.text() || 'Error al obtener productos');
 
-        const data = await response.json();
-        console.log("✅ Productos:", data);
-
-        return data;
-    } catch (error) {
-        console.error("❌ Error al obtener productos:", error);
-        throw new Error("No se pudo conectar al backend");
-    }
+    const data = await response.json();
+    console.log('✅ Productos:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Error al obtener productos:', error);
+    throw new Error('No se pudo conectar al backend');
+  }
 };
 
 // ✅ Crear o actualizar producto
 export const guardarProducto = async (producto) => {
-    try {
-        const esEdicion = producto.id !== null && producto.id !== undefined;
-        const url = esEdicion ? `${API_URL}/${producto.id}` : API_URL;
-        const method = esEdicion ? "PUT" : "POST";
+  try {
+    const esEdicion = producto.id !== null && producto.id !== undefined;
+    const url    = esEdicion ? `${API_URL}/${producto.id}` : API_URL;
+    const method = esEdicion ? 'PUT' : 'POST';
 
-        console.log("📤 Enviando producto a:", window.location.origin + url);
+    console.log('📤 Enviando producto a:', window.location.origin + url);
 
-        const response = await fetch(url, {
-            method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(producto)
-        });
+    const response = await fetch(url, {
+      method,
+      headers: authHeaders(), // 🔑
+      body: JSON.stringify(producto),
+    });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || "Error al guardar producto");
-        }
+    if (response.status === 401) { window.location.href = '/'; return null; }
+    if (!response.ok) throw new Error(await response.text() || 'Error al guardar producto');
 
-        const data = await response.json();
-        console.log("✅ Producto guardado:", data);
-
-        return data;
-    } catch (error) {
-        console.error("❌ Error al guardar producto:", error);
-        throw error;
-    }
+    const data = await response.json();
+    console.log('✅ Producto guardado:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Error al guardar producto:', error);
+    throw error;
+  }
 };
 
 // ✅ Eliminar producto
 export const eliminarProducto = async (id) => {
-    try {
-        const url = `${API_URL}/${id}`;
-        console.log("🗑 Eliminando producto:", window.location.origin + url);
+  try {
+    const url = `${API_URL}/${id}`;
+    console.log('🗑 Eliminando producto:', window.location.origin + url);
 
-        const response = await fetch(url, {
-            method: "DELETE"
-        });
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: authHeaders(), // 🔑
+    });
 
-        if (response.ok || response.status === 204) {
-            console.log("✅ Producto eliminado");
-            return true;
-        }
+    if (response.status === 401) { window.location.href = '/'; return; }
+    if (response.ok || response.status === 204) { console.log('✅ Producto eliminado'); return true; }
+    if (response.status === 404) throw new Error('Producto no encontrado');
+    if (response.status === 405) throw new Error('DELETE no permitido en el backend');
 
-        if (response.status === 404) throw new Error("Producto no encontrado");
-        if (response.status === 405) throw new Error("DELETE no permitido en el backend");
-
-        const errorText = await response.text();
-        throw new Error(errorText || `Error ${response.status}`);
-    } catch (error) {
-        console.error("❌ Error al eliminar producto:", error);
-        throw error;
-    }
+    throw new Error(await response.text() || `Error ${response.status}`);
+  } catch (error) {
+    console.error('❌ Error al eliminar producto:', error);
+    throw error;
+  }
 };
