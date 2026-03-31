@@ -1,11 +1,18 @@
-// backend/src/main/java/com/example/demo/repository/ProductoRepository.java
 package com.example.demo.repository;
 
 import com.example.demo.model.Producto;
 import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.Optional; // Asegúrate de tener este import
+
+import java.util.List;
+import java.util.Optional;
 
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
-    // ESTO QUITA EL ERROR ROJO DE TU CONTROLADOR
-    Optional<Producto> findByCodigo(String codigo); 
+
+    Optional<Producto> findByCodigo(String codigo);
+
+    List<Producto> findByEmpresaId(Long empresaId);
+
+    long countByEmpresaId(Long empresaId);
+
+    Optional<Producto> findByIdAndEmpresaId(Long id, Long empresaId);
 }

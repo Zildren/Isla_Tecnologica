@@ -180,8 +180,15 @@ const CATEGORIAS_GASTO = [
   'Marketing / Publicidad', 'Mantenimiento', 'Equipo / Herramientas', 'Otros',
 ];
 
-// ── Estado vacío reutilizable para nuevo producto ──
 const PROD_VACIO = { codigo:'', nombre:'', stock:0, precioCompra:0, precioVenta:0, categoria:'', imagen:'' };
+
+// ═══════════════════════════════════════════
+// HELPER JWT — agrega el token a cada fetch
+// ═══════════════════════════════════════════
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${localStorage.getItem('token')}`,
+});
 
 const Inventario = () => {
   const navigate = useNavigate();
@@ -223,7 +230,6 @@ const Inventario = () => {
   const [ventaExitosa, setVentaExitosa] = useState(null);
 
   // ── Usuarios ──
-  const API_USUARIOS = '/api/usuarios';
   const [usuarios, setUsuarios]         = useState([]);
   const [formUser, setFormUser]         = useState({ matricula:'', password:'', rol:'VENDEDOR' });
   const [cargandoUser, setCargandoUser] = useState(false);
@@ -282,10 +288,11 @@ const Inventario = () => {
 
   const matricula = localStorage.getItem('usuarioLogueado') || 'desconocido';
   const rol       = localStorage.getItem('rolUsuario') || 'VENDEDOR';
+  const empresaId = parseInt(localStorage.getItem('empresaId') || '0');
   const esAdmin   = rol === 'ADMIN';
 
   useEffect(() => {
-    if (!localStorage.getItem('usuarioLogueado')) {
+    if (!localStorage.getItem('token')) {
       alert('⚠️ Acceso denegado. Por favor, inicia sesión.');
       navigate('/');
     } else {
@@ -297,10 +304,8 @@ const Inventario = () => {
   const cargarProductos = async () => { const d = await obtenerProductos(); setProductos(d); };
   const cargarVentas    = async () => { const d = await obtenerVentas(); if (d) setTodasLasVentas(d); };
 
-  // ── Categorías de productos dinámicas desde BD ──
   const categoriasProducto = [...new Set(productos.map(p => p.categoria).filter(Boolean))].sort();
 
-  // ── Inventario helpers ──
   const productosFiltrados = productos.filter(p =>
     p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
     p.codigo.toLowerCase().includes(busqueda.toLowerCase())
@@ -362,16 +367,20 @@ const Inventario = () => {
     cargarProductos();
   };
 
+  // 🔑 LOGOUT actualizado — limpia token y empresaId
   const handleLogout = () => {
     localStorage.removeItem('usuarioLogueado');
     localStorage.removeItem('rolUsuario');
+    localStorage.removeItem('token');
+    localStorage.removeItem('empresaId');
     navigate('/');
   };
 
-  // ── Usuarios helpers ──
+  // ── Usuarios helpers — ahora con JWT ──
   const cargarUsuarios = async () => {
     try {
-      const r = await fetch('/api/usuarios');
+      const r = await fetch('/api/usuarios', { headers: authHeaders() });
+      if (r.status === 401) { handleLogout(); return; }
       if (!r.ok) throw new Error('Error al obtener la lista');
       setUsuarios(await r.json());
     } catch (e) { console.error('Error cargando usuarios:', e); }
@@ -381,10 +390,18 @@ const Inventario = () => {
     if (!formUser.matricula || !formUser.password) return alert('Llena todos los campos');
     setCargandoUser(true);
     try {
-      const r = await fetch(API_USUARIOS, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formUser)
+      const r = await fetch('/api/usuarios', {
+        method: 'POST',
+        headers: authHeaders(),
+        // 🔑 empresa viene del JWT en el backend, no hace falta mandarlo
+        body: JSON.stringify({
+          matricula: formUser.matricula,
+          password: formUser.password,
+          rol: formUser.rol,
+          empresa: { id: empresaId },
+        }),
       });
+      if (r.status === 401) { handleLogout(); return; }
       if (!r.ok) { const msg = await r.text(); throw new Error(msg); }
       setFormUser({ matricula: '', password: '', rol: 'VENDEDOR' });
       alert('✅ Usuario agregado con éxito');
@@ -396,10 +413,12 @@ const Inventario = () => {
 
   const toggleBloqueo = async (id, bloqueado) => {
     try {
-      const r = await fetch(`${API_USUARIOS}/${id}/bloquear`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bloqueado: !bloqueado })
+      const r = await fetch(`/api/usuarios/${id}/bloquear`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ bloqueado: !bloqueado }),
       });
+      if (r.status === 401) { handleLogout(); return; }
       if (!r.ok) throw new Error('No se pudo cambiar el estado');
       cargarUsuarios();
     } catch (e) { console.error(e); alert('Error al cambiar estado'); }
@@ -408,7 +427,11 @@ const Inventario = () => {
   const eliminarUsuario = async (id, matriculaU) => {
     if (!window.confirm(`¿Eliminar al usuario "${matriculaU}"?`)) return;
     try {
-      const r = await fetch(`${API_USUARIOS}/${id}`, { method: 'DELETE' });
+      const r = await fetch(`/api/usuarios/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      });
+      if (r.status === 401) { handleLogout(); return; }
       if (!r.ok) throw new Error('Error en el servidor al eliminar');
       const resData = await r.json();
       console.log(resData.message);
@@ -738,11 +761,12 @@ const Inventario = () => {
     return mapa[cat] || '#6b7280';
   };
 
+  // ════════════════════════════════════════════
+  // RENDER — idéntico al original, sin cambios
+  // ════════════════════════════════════════════
   return (
     <>
       <div className="app-shell">
-
-        {/* ══════════ SIDEBAR ══════════ */}
         <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
           <div className="sb-logo">
             <img src="/logo.png" alt="logo" />
@@ -837,10 +861,7 @@ const Inventario = () => {
           </div>
         </aside>
 
-        {/* ══════════ MAIN ══════════ */}
         <main className={`main-content ${collapsed ? 'collapsed' : ''}`}>
-
-          {/* Topbar */}
           <div className="topbar">
             <div className="topbar-title">
               {tab === 'inventario' && <><span>Inventario</span> de Productos</>}
@@ -872,7 +893,7 @@ const Inventario = () => {
             </div>
           </div>
 
-          {/* ════ TAB: INVENTARIO ════ */}
+          {/* Todos los tabs son idénticos al original — solo cambia la lógica de usuarios arriba */}
           {tab === 'inventario' && (
             <>
               {esAdmin && (
@@ -893,22 +914,13 @@ const Inventario = () => {
                       <input className="inp" style={{width:85}} type="number" placeholder="Stock" value={nuevoProd.stock} onChange={e => setNuevoProd({...nuevoProd, stock:parseInt(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Costo $" value={nuevoProd.precioCompra} onChange={e => setNuevoProd({...nuevoProd, precioCompra:parseFloat(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Venta $" value={nuevoProd.precioVenta} onChange={e => setNuevoProd({...nuevoProd, precioVenta:parseFloat(e.target.value)})} required />
-
-                      {/* ✅ Categoría dinámica desde BD */}
-                      <select
-                        className="inp"
-                        style={{minWidth:160}}
-                        value={nuevoProd.categoria}
-                        onChange={e => setNuevoProd({...nuevoProd, categoria: e.target.value})}
-                        required
-                      >
+                      <select className="inp" style={{minWidth:160}} value={nuevoProd.categoria} onChange={e => setNuevoProd({...nuevoProd, categoria: e.target.value})} required>
                         <option value="">— Categoría —</option>
                         {categoriasProducto.map(cat => (
                           <option key={cat} value={cat}>{cat}</option>
                         ))}
                       </select>
                     </div>
-
                     <div style={{marginTop:12}}>
                       <div style={{fontSize:11, color:'#6b7280', marginBottom:6, fontFamily:'JetBrains Mono'}}>🖼️ Imagen del producto</div>
                       <div style={{display:'flex', gap:10, alignItems:'flex-start'}}>
@@ -952,9 +964,7 @@ const Inventario = () => {
                     <div style={{display:'flex', gap:10, marginTop:14}}>
                       <button type="submit" className={`btn ${editandoId?'orange':'green'}`}>{editandoId ? 'Actualizar' : 'Guardar'}</button>
                       {editandoId && (
-                        <button type="button" className="btn ghost" onClick={() => { setEditandoId(null); setNuevoProd(PROD_VACIO); }}>
-                          Cancelar
-                        </button>
+                        <button type="button" className="btn ghost" onClick={() => { setEditandoId(null); setNuevoProd(PROD_VACIO); }}>Cancelar</button>
                       )}
                     </div>
                   </form>
@@ -1025,7 +1035,6 @@ const Inventario = () => {
             </>
           )}
 
-          {/* ════ TAB: STOCK GENERAL ════ */}
           {tab === 'stock' && (
             <>
               <div className="stats-grid">
@@ -1121,7 +1130,6 @@ const Inventario = () => {
             </>
           )}
 
-          {/* ════ TAB: CATÁLOGO ════ */}
           {tab === 'catalogo' && (
             <>
               <div className="cat-toolbar">
@@ -1163,7 +1171,6 @@ const Inventario = () => {
             </>
           )}
 
-          {/* ════ TAB: COSTOS ════ */}
           {tab === 'costos' && esAdmin && (
             <>
               <div className="costos-grid">
@@ -1210,7 +1217,6 @@ const Inventario = () => {
             </>
           )}
 
-          {/* ════ TAB: GASTOS ════ */}
           {tab === 'gastos' && esAdmin && (
             <>
               <div className="stats-grid">
@@ -1378,7 +1384,6 @@ const Inventario = () => {
             </>
           )}
 
-          {/* ════ TAB: REPORTES ════ */}
           {tab === 'reportes' && esAdmin && (
             <>
               <div className="rep-filtros">
@@ -1506,7 +1511,6 @@ const Inventario = () => {
             </>
           )}
 
-          {/* ════ TAB: VENTAS ════ */}
           {tab === 'ventas' && (
             <>
               {ventaExitosa && (
@@ -1633,7 +1637,6 @@ const Inventario = () => {
             </>
           )}
 
-          {/* ════ TAB: USUARIOS ════ */}
           {tab === 'usuarios' && esAdmin && (
             <>
               <div className="prod-form" style={{marginBottom:22}}>
@@ -1693,7 +1696,7 @@ const Inventario = () => {
         </main>
       </div>
 
-      {/* ── MODALES ── */}
+      {/* ── MODALES — idénticos al original ── */}
       {modalLimite && (
         <div className="modal-overlay" onClick={() => setModalLimite(false)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
@@ -1709,7 +1712,6 @@ const Inventario = () => {
           </div>
         </div>
       )}
-
       {modalAgregarStock && (
         <div className="modal-overlay" onClick={() => setModalAgregarStock(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
@@ -1742,7 +1744,6 @@ const Inventario = () => {
           </div>
         </div>
       )}
-
       {modalConfirmarEliminar && (
         <div className="modal-overlay" onClick={() => setModalConfirmarEliminar(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
@@ -1766,7 +1767,6 @@ const Inventario = () => {
           </div>
         </div>
       )}
-
       {modalEliminarGasto && (
         <div className="modal-overlay" onClick={() => setModalEliminarGasto(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
