@@ -943,19 +943,19 @@ const Inventario = () => {
                       <input className="inp" style={{width:85}} type="number" placeholder="Stock" value={nuevoProd.stock} onChange={e => setNuevoProd({...nuevoProd, stock:parseInt(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Costo $" value={nuevoProd.precioCompra} onChange={e => setNuevoProd({...nuevoProd, precioCompra:parseFloat(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Venta $" value={nuevoProd.precioVenta} onChange={e => setNuevoProd({...nuevoProd, precioVenta:parseFloat(e.target.value)})} required />
-                      <select className="inp" style={{minWidth:160}} value={nuevoProd.categoria} onChange={e => setNuevoProd({...nuevoProd, categoria: e.target.value})} required>
-                        <option value="">— Categoría —</option>
-                        <option value="Fundas y Celulares">Fundas y Celulares</option>
-                        <option value="Accesorios">Accesorios</option>
-                        <option value="Computadoras">Computadoras</option>
-                        <option value="Tablets">Tablets</option>
-                        <option value="Audifonos">Audifonos</option>
-                        <option value="Cables y Cargadores">Cables y Cargadores</option>
-                        <option value="Smartwatches">Smartwatches</option>
-                        <option value="Gaming">Gaming</option>
-                        <option value="Refacciones">Refacciones</option>
-                        <option value="Otros">Otros</option>
-                        
+                      // ESTO — catálogo fijo de categorías predefinidas:
+                      <select className="inp" style={{minWidth:160}} value={nuevoProd.categoria} 
+                      onChange={e => setNuevoProd({...nuevoProd, categoria: e.target.value})} required>
+                      <option value="">— Categoría —</option>
+                      <option value="Fundas">Fundas</option>
+                      <option value="Accesorios">Accesorios</option>
+                      <option value="Micas">Micas</option>
+                      <option value="Audio">Audio</option>
+                      <option value="Cables y Cargadores">Cables y Cargadores</option>
+                      <option value="Smartwatches">Smartwatches</option>
+                      <option value="Gaming">Gaming</option>
+                      <option value="Refacciones">Refacciones</option>
+                      <option value="Otros">Otros</option>
                       </select>
                     </div>
                     <div style={{marginTop:12}}>
