@@ -945,9 +945,17 @@ const Inventario = () => {
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Venta $" value={nuevoProd.precioVenta} onChange={e => setNuevoProd({...nuevoProd, precioVenta:parseFloat(e.target.value)})} required />
                       <select className="inp" style={{minWidth:160}} value={nuevoProd.categoria} onChange={e => setNuevoProd({...nuevoProd, categoria: e.target.value})} required>
                         <option value="">— Categoría —</option>
-                        {categoriasProducto.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
+                        <option value="Fundas y Celulares">Fundas y Celulares</option>
+                        <option value="Accesorios">Accesorios</option>
+                        <option value="Computadoras">Computadoras</option>
+                        <option value="Tablets">Tablets</option>
+                        <option value="Audifonos">Audifonos</option>
+                        <option value="Cables y Cargadores">Cables y Cargadores</option>
+                        <option value="Smartwatches">Smartwatches</option>
+                        <option value="Gaming">Gaming</option>
+                        <option value="Refacciones">Refacciones</option>
+                        <option value="Otros">Otros</option>
+                        
                       </select>
                     </div>
                     <div style={{marginTop:12}}>
