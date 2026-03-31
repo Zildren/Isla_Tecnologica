@@ -1,9 +1,13 @@
 package com.example.demo.controller;
 
+import com.example.demo.model.Empresa;
 import com.example.demo.model.Usuario;
 import com.example.demo.repository.UsuarioRepository;
+import com.example.demo.security.JwtService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,80 +20,84 @@ public class UsuarioController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    // 🔥 OBTENER USUARIOS POR EMPRESA (ANTES ERA GLOBAL)
-    @GetMapping("/empresa/{empresaId}")
-    public List<Usuario> obtenerPorEmpresa(@PathVariable Long empresaId) {
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    // 🔑 Helper JWT
+    private Long getEmpresaId(HttpServletRequest request) {
+        String auth = request.getHeader("Authorization");
+        if (auth == null || !auth.startsWith("Bearer ")) throw new RuntimeException("Token no encontrado");
+        return jwtService.extraerEmpresaId(auth.substring(7));
+    }
+
+    // ✅ GET /api/usuarios — filtra por empresa del JWT
+    @GetMapping
+    public List<Usuario> obtenerPorEmpresa(HttpServletRequest request) {
+        Long empresaId = getEmpresaId(request);
         return usuarioRepository.findByEmpresaId(empresaId);
     }
 
-    // 🔥 CREAR USUARIO CON VALIDACIÓN DE PLAN
+    // ✅ POST /api/usuarios — asigna empresa desde JWT
     @PostMapping
-    public ResponseEntity<?> agregar(@RequestBody Usuario usuario) {
+    public ResponseEntity<?> agregar(@RequestBody Usuario usuario,
+                                     HttpServletRequest request) {
+        Long empresaId = getEmpresaId(request);
 
-        // Validar empresa
-        if (usuario.getEmpresa() == null || usuario.getEmpresa().getId() == null) {
-            return ResponseEntity.badRequest().body("El usuario debe pertenecer a una empresa.");
+        // Matrícula única por empresa
+        if (usuarioRepository.findByMatriculaAndEmpresaId(usuario.getMatricula(), empresaId).isPresent()) {
+            return ResponseEntity.badRequest().body("Ya existe un usuario con esa matrícula en tu empresa.");
         }
 
-        Long empresaId = usuario.getEmpresa().getId();
-
-        // 🔒 Validar matrícula por empresa (NO global)
-        if (usuarioRepository
-                .findByMatriculaAndEmpresaId(usuario.getMatricula(), empresaId)
-                .isPresent()) {
-            return ResponseEntity.badRequest()
-                    .body("Ya existe un usuario con esa matrícula en tu empresa.");
-        }
-
-        // 🔥 Validar límite de usuarios según plan
+        // Límite de usuarios
         long totalUsuarios = usuarioRepository.countByEmpresaId(empresaId);
+        Empresa empresa = new Empresa();
+        empresa.setId(empresaId);
 
-        int limite = usuario.getEmpresa().getLimiteUsuarios();
-
-        if (totalUsuarios >= limite) {
-            return ResponseEntity.badRequest()
-                    .body("Límite de usuarios alcanzado para tu plan.");
-        }
-
-        if (usuario.getBloqueado() == null) {
-            usuario.setBloqueado(false);
-        }
+        // Encriptar contraseña
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+        usuario.setEmpresa(empresa);
+        if (usuario.getBloqueado() == null) usuario.setBloqueado(false);
 
         return ResponseEntity.ok(usuarioRepository.save(usuario));
     }
 
-    // 🔒 BLOQUEAR SOLO SI ES DE LA MISMA EMPRESA (SEGURIDAD)
+    // ✅ PUT /api/usuarios/{id}/bloquear
     @PutMapping("/{id}/bloquear")
-    public ResponseEntity<?> toggleBloqueo(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
+    public ResponseEntity<?> toggleBloqueo(@PathVariable Long id,
+                                           @RequestBody Map<String, Boolean> body,
+                                           HttpServletRequest request) {
+        Long empresaId = getEmpresaId(request);
         return usuarioRepository.findById(id).map(u -> {
-
+            // Verificar que el usuario pertenece a la empresa
+            if (!u.getEmpresa().getId().equals(empresaId)) {
+                return ResponseEntity.status(403).body("No autorizado");
+            }
             if (body.containsKey("bloqueado")) {
                 u.setBloqueado(body.get("bloqueado"));
                 return ResponseEntity.ok(usuarioRepository.save(u));
             }
-
-            return ResponseEntity.badRequest()
-                    .body("Falta el campo 'bloqueado' en el cuerpo de la petición.");
-
+            return ResponseEntity.badRequest().body("Falta el campo 'bloqueado'");
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // 🔥 ELIMINAR USUARIO
+    // ✅ DELETE /api/usuarios/{id}
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminar(@PathVariable Long id) {
+    public ResponseEntity<?> eliminar(@PathVariable Long id,
+                                      HttpServletRequest request) {
+        Long empresaId = getEmpresaId(request);
         try {
-            if (!usuarioRepository.existsById(id)) {
-                return ResponseEntity.notFound().build();
-            }
-
-            usuarioRepository.deleteById(id);
-
-            return ResponseEntity.ok()
-                    .body(Map.of("message", "Usuario eliminado correctamente"));
-
+            return usuarioRepository.findById(id).map(u -> {
+                if (!u.getEmpresa().getId().equals(empresaId)) {
+                    return ResponseEntity.status(403).body("No autorizado");
+                }
+                usuarioRepository.deleteById(id);
+                return ResponseEntity.ok().body(Map.of("message", "Usuario eliminado correctamente"));
+            }).orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
-            return ResponseEntity.status(500)
-                    .body("Error al eliminar usuario: " + e.getMessage());
+            return ResponseEntity.status(500).body("Error al eliminar: " + e.getMessage());
         }
     }
 }
