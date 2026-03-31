@@ -1,6 +1,5 @@
 package com.example.demo.model;
 
-import com.example.demo.model.Empresa;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -28,7 +27,8 @@ public class Producto {
     private String registradoPorMatricula;
     private LocalDateTime fechaRegistro;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    // ✅ EAGER igual que Usuario y Venta
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "empresa_id", nullable = false)
     private Empresa empresa;
 
