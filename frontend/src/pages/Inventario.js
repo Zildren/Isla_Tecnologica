@@ -406,29 +406,15 @@ const Inventario = () => {
 
   // ── Cargar productos con filtro de empresa ──
   const cargarProductos = useCallback(async () => {
-    try {
-      const d = await obtenerProductos();
-      // Filtra por empresaId si los productos tienen ese campo;
-      // de lo contrario usa todos (el backend ya los filtra vía JWT)
-      if (Array.isArray(d)) {
-        const filtrados = d.filter(p => {
-          // Si el producto tiene campo empresaId, compara. Si no, lo incluye igual
-          if (p.empresaId !== undefined && p.empresaId !== null) {
-            return p.empresaId === empresaId;
-          }
-          // Si el producto tiene objeto empresa anidado
-          if (p.empresa && p.empresa.id !== undefined) {
-            return p.empresa.id === empresaId;
-          }
-          // Si no tiene campo de empresa, el backend ya filtró
-          return true;
-        });
-        setProductos(filtrados);
-      }
-    } catch (err) {
-      console.error('Error cargando productos:', err);
+  try {
+    const d = await obtenerProductos();
+    if (Array.isArray(d)) {
+      setProductos(d); // ✅ Backend ya filtra por empresa vía JWT
     }
-  }, [empresaId]);
+  } catch (err) {
+    console.error('Error cargando productos:', err);
+  }
+}, []);
 
   const cargarGastos = async () => {
     const data = await obtenerGastos();
@@ -818,22 +804,11 @@ const Inventario = () => {
   const categoriasCat = ['Todas', ...new Set(productos.map(p => p.categoria).filter(Boolean))];
 
   const prodsCatalogo = productos.filter(p => {
-    // Filtro por empresaId: si el producto tiene campo empresaId o empresa.id, filtra;
-    // si no lo tiene, el backend ya lo filtró vía JWT y se incluye
-    const matchEmpresa = (() => {
-      if (p.empresaId !== undefined && p.empresaId !== null) {
-        return p.empresaId === empresaId;
-      }
-      if (p.empresa && p.empresa.id !== undefined) {
-        return p.empresa.id === empresaId;
-      }
-      return true; // backend ya filtró
-    })();
-    const matchCat  = filtroCat === 'Todas' || p.categoria === filtroCat;
-    const matchText = p.nombre.toLowerCase().includes(busquedaCatalogo.toLowerCase()) ||
-                      p.codigo.toLowerCase().includes(busquedaCatalogo.toLowerCase());
-    return matchEmpresa && matchCat && matchText;
-  });
+  const matchCat  = filtroCat === 'Todas' || p.categoria === filtroCat;
+  const matchText = p.nombre.toLowerCase().includes(busquedaCatalogo.toLowerCase()) ||
+                    p.codigo.toLowerCase().includes(busquedaCatalogo.toLowerCase());
+  return matchCat && matchText; // ✅ Backend ya garantiza que son de esta empresa
+});
 
   const productosFiltradosVenta = productos.filter(p =>
     p.nombre.toLowerCase().includes(busquedaVenta.toLowerCase()) ||
