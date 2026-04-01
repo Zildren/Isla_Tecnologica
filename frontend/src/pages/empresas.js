@@ -1,8 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Empresas = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!localStorage.getItem('token')) {
+      navigate('/');
+    }
+  }, [navigate]);
+
   return (
     <div style={{ padding: 40, color: '#e8eaf0' }}>
       <button onClick={() => navigate('/inventario')}
