@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const Empresas = () => {
+const empresas = () => {
   const navigate = useNavigate();
   return (
     <div style={{ padding: 40, color: '#e8eaf0' }}>
@@ -16,4 +16,4 @@ const Empresas = () => {
   );
 };
 
-export default Empresas;
+export default empresas;
