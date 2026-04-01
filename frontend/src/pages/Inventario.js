@@ -179,7 +179,7 @@ const CATEGORIAS_DEFAULT = [
   'Otros',
 ];
 
-const STORAGE_KEY_CATS = 'categorias_producto_v2';
+const STORAGE_KEY_CATS = 'categorias_producto_custom';
 
 const getCategorias = () => {
   try {
@@ -191,7 +191,7 @@ const getCategorias = () => {
       return all;
     }
   } catch {}
-  return [...CATEGORIAS_DEFAULT];
+  return [...CATEGORIAS_DEFAULT];  
 };
 
 const saveCategorias = (cats) => {
