@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { obtenerProductos, guardarProducto, eliminarProducto as deleteProducto } from '../services/productoService';
 import { obtenerVentas, registrarVenta, eliminarVenta as deleteVenta } from '../services/ventaService';
@@ -200,10 +200,9 @@ const saveCategorias = (cats) => {
   localStorage.setItem(STORAGE_KEY_CATS, JSON.stringify(custom));
 };
 
-// ─── COMPONENTE MEJORADO ───────────────────
 const CategoriaSelector = ({ value, onChange }) => {
   const [categorias, setCategorias] = useState(getCategorias);
-  const [modo, setModo] = useState('select'); // 'select' | 'nueva'
+  const [modo, setModo] = useState('select');
   const [nuevaCat, setNuevaCat] = useState('');
   const [error, setError] = useState('');
 
@@ -245,7 +244,6 @@ const CategoriaSelector = ({ value, onChange }) => {
               if (e.key === 'Escape') handleCancelar();
             }}
           />
-          {/* Botón Guardar */}
           <button
             type="button"
             title="Guardar categoría"
@@ -259,7 +257,6 @@ const CategoriaSelector = ({ value, onChange }) => {
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(52,211,153,.3)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(52,211,153,.15)'; }}
           >✓</button>
-          {/* Botón Cancelar */}
           <button
             type="button"
             title="Cancelar"
@@ -297,7 +294,6 @@ const CategoriaSelector = ({ value, onChange }) => {
           <option key={c} value={c}>{c}</option>
         ))}
       </select>
-      {/* Botón Nueva Categoría */}
       <button
         type="button"
         title="Agregar nueva categoría"
@@ -359,6 +355,7 @@ const Inventario = () => {
   // ── Catálogo ──
   const [busquedaCatalogo, setBusquedaCatalogo] = useState('');
   const [filtroCat, setFiltroCat]               = useState('Todas');
+  const [cargandoCatalogo, setCargandoCatalogo] = useState(false);
 
   // ── Reportes ──
   const [todasLasVentas, setTodasLasVentas] = useState([]);
@@ -406,6 +403,32 @@ const Inventario = () => {
   const esAdmin   = rol === 'ADMIN';
   // Solo usuario riempy (id=1 O matrícula 'riempy') ve Empresas
   const esRiempy  = userId === 1 || matricula === 'riempy';
+
+  // ── Cargar productos con filtro de empresa ──
+  const cargarProductos = useCallback(async () => {
+    try {
+      const d = await obtenerProductos();
+      // Filtra por empresaId si los productos tienen ese campo;
+      // de lo contrario usa todos (el backend ya los filtra vía JWT)
+      if (Array.isArray(d)) {
+        const filtrados = d.filter(p => {
+          // Si el producto tiene campo empresaId, compara. Si no, lo incluye igual
+          if (p.empresaId !== undefined && p.empresaId !== null) {
+            return p.empresaId === empresaId;
+          }
+          // Si el producto tiene objeto empresa anidado
+          if (p.empresa && p.empresa.id !== undefined) {
+            return p.empresa.id === empresaId;
+          }
+          // Si no tiene campo de empresa, el backend ya filtró
+          return true;
+        });
+        setProductos(filtrados);
+      }
+    } catch (err) {
+      console.error('Error cargando productos:', err);
+    }
+  }, [empresaId]);
 
   const cargarGastos = async () => {
     const data = await obtenerGastos();
@@ -474,9 +497,16 @@ const Inventario = () => {
       cargarVentas();
       cargarGastos();
     }
-  }, [navigate]);
+  }, [navigate, cargarProductos]);
 
-  const cargarProductos = async () => { const d = await obtenerProductos(); setProductos(d); };
+  // ── Recarga de productos al entrar al Catálogo ──
+  useEffect(() => {
+    if (tab === 'catalogo') {
+      setCargandoCatalogo(true);
+      cargarProductos().finally(() => setCargandoCatalogo(false));
+    }
+  }, [tab, cargarProductos]);
+
   const cargarVentas    = async () => { const d = await obtenerVentas(); if (d) setTodasLasVentas(d); };
 
   const categoriasProducto = [...new Set(productos.map(p => p.categoria).filter(Boolean))].sort();
@@ -784,13 +814,25 @@ const Inventario = () => {
     };
   });
 
-  // ── Catálogo ──
+  // ── Catálogo: filtrado por empresa + texto + categoría ──
   const categoriasCat = ['Todas', ...new Set(productos.map(p => p.categoria).filter(Boolean))];
+
   const prodsCatalogo = productos.filter(p => {
+    // Filtro por empresaId: si el producto tiene campo empresaId o empresa.id, filtra;
+    // si no lo tiene, el backend ya lo filtró vía JWT y se incluye
+    const matchEmpresa = (() => {
+      if (p.empresaId !== undefined && p.empresaId !== null) {
+        return p.empresaId === empresaId;
+      }
+      if (p.empresa && p.empresa.id !== undefined) {
+        return p.empresa.id === empresaId;
+      }
+      return true; // backend ya filtró
+    })();
     const matchCat  = filtroCat === 'Todas' || p.categoria === filtroCat;
     const matchText = p.nombre.toLowerCase().includes(busquedaCatalogo.toLowerCase()) ||
                       p.codigo.toLowerCase().includes(busquedaCatalogo.toLowerCase());
-    return matchCat && matchText;
+    return matchEmpresa && matchCat && matchText;
   });
 
   const productosFiltradosVenta = productos.filter(p =>
@@ -833,7 +875,7 @@ const Inventario = () => {
     acc[g.categoria] = (acc[g.categoria] || 0) + g.monto;
     return acc;
   }, {});
-  const topCategoria = Object.entries(gastosPorCategoria).sort((a, b) => b[1] - a[1])[0];
+  const topCategoria = Object.entries(gastosPorCategoria).sort((a, b) => b[1]-a[1])[0];
 
   const exportarStockPDF = () => {
     setGenerandoPDF(true);
@@ -964,7 +1006,6 @@ const Inventario = () => {
           </div>
 
           <nav className="sb-nav">
-            {/* ── SECCIÓN PRINCIPAL ── */}
             {!collapsed && <div className="sb-section-label">Principal</div>}
 
             {/* ══ BOTÓN EMPRESAS — solo visible para riempy (id=1) ══ */}
@@ -1084,6 +1125,30 @@ const Inventario = () => {
               {tab === 'stock' && (
                 <button className="btn ghost" style={{fontSize:12, padding:'7px 14px'}} onClick={cargarProductos}>🔄 Actualizar</button>
               )}
+              {/* ── Botón actualizar catálogo + info empresa ── */}
+              {tab === 'catalogo' && (
+                <div style={{display:'flex', alignItems:'center', gap:10}}>
+                  <div style={{
+                    fontSize:11, color:'#a78bfa', fontFamily:'JetBrains Mono',
+                    background:'rgba(167,139,250,.1)', border:'1px solid rgba(167,139,250,.25)',
+                    borderRadius:16, padding:'4px 12px', display:'flex', alignItems:'center', gap:5
+                  }}>
+                    🏢 Empresa ID: <strong>{empresaId}</strong>
+                    {esRiempy && <span style={{color:'#fbbf24', marginLeft:4}}>· riempy</span>}
+                  </div>
+                  <button
+                    className="btn ghost"
+                    style={{fontSize:12, padding:'7px 14px'}}
+                    onClick={() => {
+                      setCargandoCatalogo(true);
+                      cargarProductos().finally(() => setCargandoCatalogo(false));
+                    }}
+                    disabled={cargandoCatalogo}
+                  >
+                    {cargandoCatalogo ? '⏳ Cargando...' : '🔄 Actualizar'}
+                  </button>
+                </div>
+              )}
               {tab === 'gastos' && (
                 <div style={{display:'flex', alignItems:'center', gap:12}}>
                   {gastos.length > 0 && (
@@ -1118,15 +1183,11 @@ const Inventario = () => {
                       <input className="inp" style={{width:85}} type="number" placeholder="Stock" value={nuevoProd.stock} onChange={e => setNuevoProd({...nuevoProd, stock:parseInt(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Costo $" value={nuevoProd.precioCompra} onChange={e => setNuevoProd({...nuevoProd, precioCompra:parseFloat(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Venta $" value={nuevoProd.precioVenta} onChange={e => setNuevoProd({...nuevoProd, precioVenta:parseFloat(e.target.value)})} required />
-
-                      {/* ══ SELECTOR DE CATEGORÍA MEJORADO ══ */}
                       <CategoriaSelector
                         value={nuevoProd.categoria}
                         onChange={val => setNuevoProd({...nuevoProd, categoria: val})}
                       />
                     </div>
-
-                    {/* ── IMAGEN ── */}
                     <div style={{marginTop:12}}>
                       <div style={{fontSize:11, color:'#6b7280', marginBottom:6, fontFamily:'JetBrains Mono'}}>🖼️ Imagen del producto</div>
                       <div style={{display:'flex', gap:10, alignItems:'flex-start'}}>
@@ -1341,9 +1402,28 @@ const Inventario = () => {
             </>
           )}
 
-          {/* ── TAB CATÁLOGO ── */}
+          {/* ══════════════════════════════════════════
+              ── TAB CATÁLOGO ──
+              Muestra productos filtrados por empresaId.
+              Se recarga automáticamente al entrar al tab.
+          ══════════════════════════════════════════ */}
           {tab === 'catalogo' && (
             <>
+              {/* Banner de empresa activa */}
+              <div style={{
+                display:'flex', alignItems:'center', gap:10, marginBottom:16,
+                padding:'10px 16px', borderRadius:10,
+                background:'rgba(167,139,250,.07)', border:'1px solid rgba(167,139,250,.2)',
+                fontSize:12, color:'#a78bfa', fontFamily:'JetBrains Mono',
+              }}>
+                <span style={{fontSize:15}}>🏢</span>
+                <span>
+                  Mostrando catálogo de <strong>Empresa ID: {empresaId}</strong>
+                  {esRiempy && <span style={{color:'#fbbf24', marginLeft:6}}>· riempy (admin global)</span>}
+                  {' '}· {productos.length} producto{productos.length !== 1 ? 's' : ''} en inventario
+                </span>
+              </div>
+
               <div className="cat-toolbar">
                 <div className="search-wrap" style={{marginBottom:0, flex:1, maxWidth:320}}>
                   <span className="search-icon">🔍</span>
@@ -1354,11 +1434,66 @@ const Inventario = () => {
                     <button key={c} className={`cat-filtro-btn ${filtroCat===c?'active':''}`} onClick={() => setFiltroCat(c)}>{c}</button>
                   ))}
                 </div>
-                <div style={{fontSize:12, color:'#4b5563', whiteSpace:'nowrap'}}>{prodsCatalogo.length} producto{prodsCatalogo.length !== 1 ? 's' : ''}</div>
+                <div style={{fontSize:12, color:'#4b5563', whiteSpace:'nowrap'}}>
+                  {cargandoCatalogo
+                    ? <span style={{color:'#4f9eff'}}>⏳ Cargando...</span>
+                    : <>{prodsCatalogo.length} producto{prodsCatalogo.length !== 1 ? 's' : ''}</>
+                  }
+                </div>
               </div>
-              {prodsCatalogo.length === 0 ? (
-                <div style={{textAlign:'center', padding:'60px 0', color:'#374151', fontSize:14}}>No se encontraron productos</div>
-              ) : (
+
+              {/* Estado vacío diferenciado */}
+              {!cargandoCatalogo && prodsCatalogo.length === 0 && (
+                <div style={{
+                  textAlign:'center', padding:'60px 0', color:'#374151',
+                  display:'flex', flexDirection:'column', alignItems:'center', gap:14,
+                }}>
+                  <span style={{fontSize:40}}>📦</span>
+                  <div style={{fontSize:15, color:'#4b5563', fontWeight:600}}>
+                    {productos.length === 0
+                      ? `Sin productos para la empresa ID ${empresaId}`
+                      : 'Sin resultados para esta búsqueda'}
+                  </div>
+                  {productos.length === 0 && (
+                    <div style={{fontSize:12, color:'#374151', fontFamily:'JetBrains Mono', maxWidth:360, lineHeight:1.7}}>
+                      Asegúrate de que los productos estén asignados a la empresa con ID <strong style={{color:'#a78bfa'}}>{empresaId}</strong>.
+                      Puedes agregar productos desde la sección <strong>Inventario</strong>.
+                    </div>
+                  )}
+                  {esAdmin && productos.length === 0 && (
+                    <button
+                      className="btn blue"
+                      style={{marginTop:6, padding:'9px 22px', fontSize:13}}
+                      onClick={() => setTab('inventario')}
+                    >
+                      ➕ Ir a Inventario
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Skeleton de carga */}
+              {cargandoCatalogo && (
+                <div className="cat-grid">
+                  {Array.from({length: 8}).map((_, i) => (
+                    <div key={i} style={{
+                      background:'#0d0f14', border:'1px solid #1e2230',
+                      borderRadius:14, overflow:'hidden', animation:'pulse 1.5s ease-in-out infinite',
+                      opacity: 0.5 + (i % 3) * 0.1,
+                    }}>
+                      <div style={{height:160, background:'#1e2230'}}/>
+                      <div style={{padding:'14px 16px', display:'flex', flexDirection:'column', gap:8}}>
+                        <div style={{height:10, background:'#1e2230', borderRadius:4, width:'40%'}}/>
+                        <div style={{height:14, background:'#1e2230', borderRadius:4, width:'75%'}}/>
+                        <div style={{height:18, background:'#1e2230', borderRadius:4, width:'50%', marginTop:4}}/>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Grid de productos */}
+              {!cargandoCatalogo && prodsCatalogo.length > 0 && (
                 <div className="cat-grid">
                   {prodsCatalogo.map(p => {
                     const st = stockStatus(p.stock, limiteStock);
@@ -2008,4 +2143,4 @@ const Inventario = () => {
   );
 };
 
-export default Inventario;   
+export default Inventario;
