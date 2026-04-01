@@ -187,7 +187,6 @@ const getCategorias = () => {
     const stored = localStorage.getItem(STORAGE_KEY_CATS);
     if (stored) {
       const parsed = JSON.parse(stored);
-      // Merge defaults + custom, sin duplicados
       const all = [...CATEGORIAS_DEFAULT];
       parsed.forEach(c => { if (!all.includes(c)) all.push(c); });
       return all;
@@ -197,21 +196,22 @@ const getCategorias = () => {
 };
 
 const saveCategorias = (cats) => {
-  // Solo guardamos las que no son default
   const custom = cats.filter(c => !CATEGORIAS_DEFAULT.includes(c));
   localStorage.setItem(STORAGE_KEY_CATS, JSON.stringify(custom));
 };
 
+// ─── COMPONENTE MEJORADO ───────────────────
 const CategoriaSelector = ({ value, onChange }) => {
   const [categorias, setCategorias] = useState(getCategorias);
-  const [agregando, setAgregando] = useState(false);
+  const [modo, setModo] = useState('select'); // 'select' | 'nueva'
   const [nuevaCat, setNuevaCat] = useState('');
+  const [error, setError] = useState('');
 
   const handleAgregar = () => {
     const trimmed = nuevaCat.trim();
-    if (!trimmed) return;
+    if (!trimmed) { setError('Escribe un nombre'); return; }
     if (categorias.map(c => c.toLowerCase()).includes(trimmed.toLowerCase())) {
-      alert('Esa categoría ya existe');
+      setError('Esa categoría ya existe');
       return;
     }
     const updated = [...categorias, trimmed];
@@ -219,69 +219,104 @@ const CategoriaSelector = ({ value, onChange }) => {
     saveCategorias(updated);
     onChange(trimmed);
     setNuevaCat('');
-    setAgregando(false);
+    setError('');
+    setModo('select');
   };
 
-  return (
-    <div style={{ display:'flex', gap:8, alignItems:'center', minWidth:200 }}>
-      {agregando ? (
-        <div style={{ display:'flex', gap:6, alignItems:'center', flex:1 }}>
+  const handleCancelar = () => {
+    setModo('select');
+    setNuevaCat('');
+    setError('');
+  };
+
+  if (modo === 'nueva') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 220 }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <input
             className="inp"
-            style={{ flex:1, minWidth:130 }}
-            placeholder="Nueva categoría..."
+            style={{ flex: 1, minWidth: 140, borderColor: error ? 'rgba(248,113,113,.6)' : undefined }}
+            placeholder="Nombre de la categoría..."
             value={nuevaCat}
             autoFocus
-            onChange={e => setNuevaCat(e.target.value)}
+            onChange={e => { setNuevaCat(e.target.value); setError(''); }}
             onKeyDown={e => {
-              if (e.key === 'Enter') handleAgregar();
-              if (e.key === 'Escape') { setAgregando(false); setNuevaCat(''); }
+              if (e.key === 'Enter') { e.preventDefault(); handleAgregar(); }
+              if (e.key === 'Escape') handleCancelar();
             }}
           />
+          {/* Botón Guardar */}
           <button
             type="button"
-            className="ico-btn save"
             title="Guardar categoría"
             onClick={handleAgregar}
-            style={{ width:32, height:32, fontSize:14, flexShrink:0 }}
+            style={{
+              width: 34, height: 34, borderRadius: 8, border: '1px solid rgba(52,211,153,.5)',
+              background: 'rgba(52,211,153,.15)', color: '#34d399', cursor: 'pointer',
+              fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0, transition: 'all .15s', fontWeight: 700,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(52,211,153,.3)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(52,211,153,.15)'; }}
           >✓</button>
+          {/* Botón Cancelar */}
           <button
             type="button"
-            className="ico-btn cancel"
             title="Cancelar"
-            onClick={() => { setAgregando(false); setNuevaCat(''); }}
-            style={{ width:32, height:32, fontSize:14, flexShrink:0 }}
+            onClick={handleCancelar}
+            style={{
+              width: 34, height: 34, borderRadius: 8, border: '1px solid rgba(248,113,113,.4)',
+              background: 'rgba(248,113,113,.1)', color: '#f87171', cursor: 'pointer',
+              fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0, transition: 'all .15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(248,113,113,.25)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(248,113,113,.1)'; }}
           >✕</button>
         </div>
-      ) : (
-        <>
-          <select
-            className="inp"
-            style={{ flex:1, minWidth:160 }}
-            value={value}
-            onChange={e => onChange(e.target.value)}
-            required
-          >
-            <option value="" disabled>— Categoría —</option>
-            {categorias.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-          <button
-            type="button"
-            title="Agregar nueva categoría"
-            onClick={() => setAgregando(true)}
-            style={{
-              width:32, height:32, borderRadius:8, border:'1px solid #2a3045',
-              background:'rgba(79,158,255,.1)', color:'#4f9eff', cursor:'pointer',
-              fontSize:18, display:'flex', alignItems:'center', justifyContent:'center',
-              flexShrink:0, transition:'all .15s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background='rgba(79,158,255,.25)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background='rgba(79,158,255,.1)'; }}
-          >+</button>
-        </>
-      )}
+        {error && (
+          <span style={{ fontSize: 11, color: '#f87171', fontFamily: 'JetBrains Mono, monospace', paddingLeft: 2 }}>
+            ⚠ {error}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 220 }}>
+      <select
+        className="inp"
+        style={{ flex: 1, minWidth: 160 }}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        required
+      >
+        <option value="" disabled>— Categoría —</option>
+        {categorias.map(c => (
+          <option key={c} value={c}>{c}</option>
+        ))}
+      </select>
+      {/* Botón Nueva Categoría */}
+      <button
+        type="button"
+        title="Agregar nueva categoría"
+        onClick={() => setModo('nueva')}
+        style={{
+          width: 34, height: 34, borderRadius: 8, border: '1px solid #2a3045',
+          background: 'rgba(79,158,255,.1)', color: '#4f9eff', cursor: 'pointer',
+          fontSize: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0, transition: 'all .15s', fontWeight: 300, lineHeight: 1,
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.background = 'rgba(79,158,255,.25)';
+          e.currentTarget.style.borderColor = 'rgba(79,158,255,.5)';
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.background = 'rgba(79,158,255,.1)';
+          e.currentTarget.style.borderColor = '#2a3045';
+        }}
+      >+</button>
     </div>
   );
 };
@@ -369,7 +404,7 @@ const Inventario = () => {
   const empresaId = parseInt(localStorage.getItem('empresaId') || '0');
   const userId    = parseInt(localStorage.getItem('userId') || '0');
   const esAdmin   = rol === 'ADMIN';
-  // Solo usuario con id 1 (riempy) ve el botón Empresas
+  // Solo usuario riempy (id=1 O matrícula 'riempy') ve Empresas
   const esRiempy  = userId === 1 || matricula === 'riempy';
 
   const cargarGastos = async () => {
@@ -927,22 +962,29 @@ const Inventario = () => {
               </div>
             )}
           </div>
+
           <nav className="sb-nav">
+            {/* ── SECCIÓN PRINCIPAL ── */}
             {!collapsed && <div className="sb-section-label">Principal</div>}
 
-            {/* ── EMPRESAS — solo visible para riempy (id=1) ── */}
+            {/* ══ BOTÓN EMPRESAS — solo visible para riempy (id=1) ══ */}
             {esRiempy && (
               <button
                 className="sb-item"
                 onClick={() => navigate('/empresas')}
                 title={collapsed ? 'Empresas' : ''}
                 style={{
-                  background: 'linear-gradient(90deg, rgba(167,139,250,.12) 0%, transparent 100%)',
-                  borderLeft: '2px solid #a78bfa',
+                  background: 'linear-gradient(90deg, rgba(167,139,250,.15) 0%, transparent 100%)',
+                  borderLeft: '3px solid #a78bfa',
+                  marginBottom: 4,
                 }}
               >
                 <span className="sb-icon">🏢</span>
-                {!collapsed && <span className="sb-label" style={{ color:'#a78bfa', fontWeight:700 }}>Empresas</span>}
+                {!collapsed && (
+                  <span className="sb-label" style={{ color: '#a78bfa', fontWeight: 700 }}>
+                    Empresas
+                  </span>
+                )}
               </button>
             )}
 
@@ -1002,6 +1044,7 @@ const Inventario = () => {
               </>
             )}
           </nav>
+
           <div className="sb-bottom">
             <div className="sb-logout" style={{padding:'10px'}}>
               <button className="sb-item" onClick={handleLogout} title={collapsed?'Cerrar Sesión':''}>
@@ -1076,12 +1119,14 @@ const Inventario = () => {
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Costo $" value={nuevoProd.precioCompra} onChange={e => setNuevoProd({...nuevoProd, precioCompra:parseFloat(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Venta $" value={nuevoProd.precioVenta} onChange={e => setNuevoProd({...nuevoProd, precioVenta:parseFloat(e.target.value)})} required />
 
-                      {/* ── SELECTOR DE CATEGORÍA CON AGREGAR CUSTOM ── */}
+                      {/* ══ SELECTOR DE CATEGORÍA MEJORADO ══ */}
                       <CategoriaSelector
                         value={nuevoProd.categoria}
                         onChange={val => setNuevoProd({...nuevoProd, categoria: val})}
                       />
                     </div>
+
+                    {/* ── IMAGEN ── */}
                     <div style={{marginTop:12}}>
                       <div style={{fontSize:11, color:'#6b7280', marginBottom:6, fontFamily:'JetBrains Mono'}}>🖼️ Imagen del producto</div>
                       <div style={{display:'flex', gap:10, alignItems:'flex-start'}}>
