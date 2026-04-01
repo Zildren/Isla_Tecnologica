@@ -1393,7 +1393,7 @@ const Inventario = () => {
                 <span style={{fontSize:15}}>🏢</span>
                 <span>
                   Mostrando catálogo de <strong>Empresa ID: {empresaId}</strong>
-                  {esRiempy && <span style={{color:'#fbbf24', marginLeft:6}}>· riempy (admin global)</span>}
+                  {esriempy && <span style={{color:'#fbbf24', marginLeft:6}}>· riempy (admin global)</span>}
                   {' '}· {productos.length} producto{productos.length !== 1 ? 's' : ''} en inventario
                 </span>
               </div>
