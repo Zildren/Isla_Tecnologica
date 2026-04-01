@@ -176,7 +176,7 @@ const BarChartSVG = ({ data }) => {
 // SELECTOR DE CATEGORÍA CON AGREGAR CUSTOM
 // ═══════════════════════════════════════════
 const CATEGORIAS_DEFAULT = [
-  'Agrega tu catalogo', 'Otros',
+  'Otros',
 ];
 
 const STORAGE_KEY_CATS = 'categorias_producto_custom';
