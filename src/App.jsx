@@ -1,7 +1,8 @@
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Inventario from './pages/Inventario';
-import Empresas from './pages/empresas'; // ← agrega esto
+import Empresas from './pages/empresas';
 
 const PrivateRoute = ({ children }) => {
   const usuario = localStorage.getItem('usuarioLogueado');
@@ -17,7 +18,7 @@ function App() {
           <Inventario />
         </PrivateRoute>
       } />
-      <Route path="/empresas" element={        // ← agrega esto
+      <Route path="/empresas" element={
         <PrivateRoute>
           <Empresas />
         </PrivateRoute>
