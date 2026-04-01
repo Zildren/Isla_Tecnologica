@@ -172,6 +172,120 @@ const BarChartSVG = ({ data }) => {
   );
 };
 
+// ═══════════════════════════════════════════
+// SELECTOR DE CATEGORÍA CON AGREGAR CUSTOM
+// ═══════════════════════════════════════════
+const CATEGORIAS_DEFAULT = [
+  'Fundas', 'Accesorios', 'Micas', 'Audio',
+  'Cables y Cargadores', 'Smartwatches', 'Gaming', 'Refacciones', 'Otros',
+];
+
+const STORAGE_KEY_CATS = 'categorias_producto_custom';
+
+const getCategorias = () => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_CATS);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Merge defaults + custom, sin duplicados
+      const all = [...CATEGORIAS_DEFAULT];
+      parsed.forEach(c => { if (!all.includes(c)) all.push(c); });
+      return all;
+    }
+  } catch {}
+  return [...CATEGORIAS_DEFAULT];
+};
+
+const saveCategorias = (cats) => {
+  // Solo guardamos las que no son default
+  const custom = cats.filter(c => !CATEGORIAS_DEFAULT.includes(c));
+  localStorage.setItem(STORAGE_KEY_CATS, JSON.stringify(custom));
+};
+
+const CategoriaSelector = ({ value, onChange }) => {
+  const [categorias, setCategorias] = useState(getCategorias);
+  const [agregando, setAgregando] = useState(false);
+  const [nuevaCat, setNuevaCat] = useState('');
+
+  const handleAgregar = () => {
+    const trimmed = nuevaCat.trim();
+    if (!trimmed) return;
+    if (categorias.map(c => c.toLowerCase()).includes(trimmed.toLowerCase())) {
+      alert('Esa categoría ya existe');
+      return;
+    }
+    const updated = [...categorias, trimmed];
+    setCategorias(updated);
+    saveCategorias(updated);
+    onChange(trimmed);
+    setNuevaCat('');
+    setAgregando(false);
+  };
+
+  return (
+    <div style={{ display:'flex', gap:8, alignItems:'center', minWidth:200 }}>
+      {agregando ? (
+        <div style={{ display:'flex', gap:6, alignItems:'center', flex:1 }}>
+          <input
+            className="inp"
+            style={{ flex:1, minWidth:130 }}
+            placeholder="Nueva categoría..."
+            value={nuevaCat}
+            autoFocus
+            onChange={e => setNuevaCat(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') handleAgregar();
+              if (e.key === 'Escape') { setAgregando(false); setNuevaCat(''); }
+            }}
+          />
+          <button
+            type="button"
+            className="ico-btn save"
+            title="Guardar categoría"
+            onClick={handleAgregar}
+            style={{ width:32, height:32, fontSize:14, flexShrink:0 }}
+          >✓</button>
+          <button
+            type="button"
+            className="ico-btn cancel"
+            title="Cancelar"
+            onClick={() => { setAgregando(false); setNuevaCat(''); }}
+            style={{ width:32, height:32, fontSize:14, flexShrink:0 }}
+          >✕</button>
+        </div>
+      ) : (
+        <>
+          <select
+            className="inp"
+            style={{ flex:1, minWidth:160 }}
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            required
+          >
+            <option value="" disabled>— Categoría —</option>
+            {categorias.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            title="Agregar nueva categoría"
+            onClick={() => setAgregando(true)}
+            style={{
+              width:32, height:32, borderRadius:8, border:'1px solid #2a3045',
+              background:'rgba(79,158,255,.1)', color:'#4f9eff', cursor:'pointer',
+              fontSize:18, display:'flex', alignItems:'center', justifyContent:'center',
+              flexShrink:0, transition:'all .15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background='rgba(79,158,255,.25)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background='rgba(79,158,255,.1)'; }}
+          >+</button>
+        </>
+      )}
+    </div>
+  );
+};
+
 const stockStatus = (stock, limit) => stock === 0 ? 'critical' : stock <= limit ? 'low' : 'ok';
 const stockLabel  = { ok: '✅', low: '⚠️', critical: '🔴' };
 
@@ -184,7 +298,7 @@ const CATEGORIAS_GASTO = [
 const PROD_VACIO = { codigo:'', nombre:'', stock:0, precioCompra:0, precioVenta:0, categoria:'', imagen:'' };
 
 // ═══════════════════════════════════════════
-// HELPER JWT — agrega el token a cada fetch
+// HELPER JWT
 // ═══════════════════════════════════════════
 const authHeaders = () => ({
   'Content-Type': 'application/json',
@@ -246,13 +360,24 @@ const Inventario = () => {
   const [modalEliminarGasto, setModalEliminarGasto] = useState(null);
   const [gastoEditando, setGastoEditando]           = useState(null);
 
+  // ── Layout ──
+  const [tab, setTab]             = useState('inventario');
+  const [collapsed, setCollapsed] = useState(false);
+
+  const matricula = localStorage.getItem('usuarioLogueado') || 'desconocido';
+  const rol       = localStorage.getItem('rolUsuario') || 'VENDEDOR';
+  const empresaId = parseInt(localStorage.getItem('empresaId') || '0');
+  const userId    = parseInt(localStorage.getItem('userId') || '0');
+  const esAdmin   = rol === 'ADMIN';
+  // Solo usuario con id 1 (riempy) ve el botón Empresas
+  const esRiempy  = userId === 1 || matricula === 'riempy';
+
   const cargarGastos = async () => {
     const data = await obtenerGastos();
     setGastos(data.map(g => ({
       ...g,
       registradoPor: g.registradoPor,
-      // normaliza fecha para que el filtro funcione igual que antes
-      fecha: g.fecha, // ya viene como "yyyy-MM-dd" del backend
+      fecha: g.fecha,
     })));
   };
 
@@ -305,15 +430,6 @@ const Inventario = () => {
     }
   };
 
-  // ── Layout ──
-  const [tab, setTab]             = useState('inventario');
-  const [collapsed, setCollapsed] = useState(false);
-
-  const matricula = localStorage.getItem('usuarioLogueado') || 'desconocido';
-  const rol       = localStorage.getItem('rolUsuario') || 'VENDEDOR';
-  const empresaId = parseInt(localStorage.getItem('empresaId') || '0');
-  const esAdmin   = rol === 'ADMIN';
-
   useEffect(() => {
     if (!localStorage.getItem('token')) {
       alert('⚠️ Acceso denegado. Por favor, inicia sesión.');
@@ -321,7 +437,7 @@ const Inventario = () => {
     } else {
       cargarProductos();
       cargarVentas();
-      cargarGastos(); // 🔑 NUEVO
+      cargarGastos();
     }
   }, [navigate]);
 
@@ -391,16 +507,16 @@ const Inventario = () => {
     cargarProductos();
   };
 
-  // 🔑 LOGOUT actualizado — limpia token y empresaId
   const handleLogout = () => {
     localStorage.removeItem('usuarioLogueado');
     localStorage.removeItem('rolUsuario');
     localStorage.removeItem('token');
     localStorage.removeItem('empresaId');
+    localStorage.removeItem('userId');
     navigate('/');
   };
 
-  // ── Usuarios helpers — ahora con JWT ──
+  // ── Usuarios helpers ──
   const cargarUsuarios = async () => {
     try {
       const r = await fetch('/api/usuarios', { headers: authHeaders() });
@@ -417,7 +533,6 @@ const Inventario = () => {
       const r = await fetch('/api/usuarios', {
         method: 'POST',
         headers: authHeaders(),
-        // 🔑 empresa viene del JWT en el backend, no hace falta mandarlo
         body: JSON.stringify({
           matricula: formUser.matricula,
           password: formUser.password,
@@ -786,7 +901,7 @@ const Inventario = () => {
   };
 
   // ════════════════════════════════════════════
-  // RENDER — idéntico al original, sin cambios
+  // RENDER
   // ════════════════════════════════════════════
   return (
     <>
@@ -814,6 +929,23 @@ const Inventario = () => {
           </div>
           <nav className="sb-nav">
             {!collapsed && <div className="sb-section-label">Principal</div>}
+
+            {/* ── EMPRESAS — solo visible para riempy (id=1) ── */}
+            {esRiempy && (
+              <button
+                className="sb-item"
+                onClick={() => navigate('/empresas')}
+                title={collapsed ? 'Empresas' : ''}
+                style={{
+                  background: 'linear-gradient(90deg, rgba(167,139,250,.12) 0%, transparent 100%)',
+                  borderLeft: '2px solid #a78bfa',
+                }}
+              >
+                <span className="sb-icon">🏢</span>
+                {!collapsed && <span className="sb-label" style={{ color:'#a78bfa', fontWeight:700 }}>Empresas</span>}
+              </button>
+            )}
+
             <button className={`sb-item ${tab==='inventario'?'active':''}`} onClick={() => setTab('inventario')} title={collapsed?'Inventario':''}>
               <span className="sb-icon">📦</span>
               {!collapsed && <span className="sb-label">Inventario</span>}
@@ -922,7 +1054,7 @@ const Inventario = () => {
             </div>
           </div>
 
-          {/* Todos los tabs son idénticos al original — solo cambia la lógica de usuarios arriba */}
+          {/* ── TAB INVENTARIO ── */}
           {tab === 'inventario' && (
             <>
               {esAdmin && (
@@ -943,20 +1075,12 @@ const Inventario = () => {
                       <input className="inp" style={{width:85}} type="number" placeholder="Stock" value={nuevoProd.stock} onChange={e => setNuevoProd({...nuevoProd, stock:parseInt(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Costo $" value={nuevoProd.precioCompra} onChange={e => setNuevoProd({...nuevoProd, precioCompra:parseFloat(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Venta $" value={nuevoProd.precioVenta} onChange={e => setNuevoProd({...nuevoProd, precioVenta:parseFloat(e.target.value)})} required />
-                      // ESTO — catálogo fijo de categorías predefinidas:
-                      <select className="inp" style={{minWidth:160}} value={nuevoProd.categoria} 
-                      onChange={e => setNuevoProd({...nuevoProd, categoria: e.target.value})} required>
-                      <option value="">— Categoría —</option>
-                      <option value="Fundas">Fundas</option>
-                      <option value="Accesorios">Accesorios</option>
-                      <option value="Micas">Micas</option>
-                      <option value="Audio">Audio</option>
-                      <option value="Cables y Cargadores">Cables y Cargadores</option>
-                      <option value="Smartwatches">Smartwatches</option>
-                      <option value="Gaming">Gaming</option>
-                      <option value="Refacciones">Refacciones</option>
-                      <option value="Otros">Otros</option>
-                      </select>
+
+                      {/* ── SELECTOR DE CATEGORÍA CON AGREGAR CUSTOM ── */}
+                      <CategoriaSelector
+                        value={nuevoProd.categoria}
+                        onChange={val => setNuevoProd({...nuevoProd, categoria: val})}
+                      />
                     </div>
                     <div style={{marginTop:12}}>
                       <div style={{fontSize:11, color:'#6b7280', marginBottom:6, fontFamily:'JetBrains Mono'}}>🖼️ Imagen del producto</div>
@@ -989,8 +1113,8 @@ const Inventario = () => {
                           </div>
                         </div>
                         <div style={{ width:70, height:70, borderRadius:10, border:'1px solid #1e2230', background:'#0d0f14', flexShrink:0, overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24 }}>
-                          {nuevoProd.imagen ? <img src={nuevoProd.imagen} alt="preview" style={{width:'100%', height:'100%', objectFit:'cover'}} onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='block'; }} /> : null}
-                          <span style={{display: nuevoProd.imagen ? 'none' : 'block'}}>📦</span>
+                          {nuevoProd.imagen ? <img src={nuevoProd.imagen} alt="preview" style={{width:'100%', height:'100%', objectFit:'cover'}} onError={e => { e.target.style.display='none'; }} /> : null}
+                          {!nuevoProd.imagen && <span>📦</span>}
                         </div>
                       </div>
                       {nuevoProd.imagen && (
@@ -1031,8 +1155,10 @@ const Inventario = () => {
                       return (
                         <tr key={p.id}>
                           <td>
-                            {p.imagen ? <img src={p.imagen} alt={p.nombre} style={{width:38,height:38,borderRadius:7,objectFit:'cover',border:'1px solid #1e2230',background:'#0d0f14',display:'block'}} onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='flex';}} /> : null}
-                            <div style={{width:38,height:38,borderRadius:7,background:'#0d0f14',border:'1px solid #1e2230',display:p.imagen?'none':'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>📦</div>
+                            {p.imagen
+                              ? <img src={p.imagen} alt={p.nombre} style={{width:38,height:38,borderRadius:7,objectFit:'cover',border:'1px solid #1e2230',background:'#0d0f14',display:'block'}} onError={e=>{e.target.style.display='none';}} />
+                              : <div style={{width:38,height:38,borderRadius:7,background:'#0d0f14',border:'1px solid #1e2230',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>📦</div>
+                            }
                           </td>
                           <td><span className="mono" style={{color:'#6b7280'}}>{p.codigo}</span></td>
                           <td style={{fontWeight:500}}>{p.nombre}</td>
@@ -1072,6 +1198,7 @@ const Inventario = () => {
             </>
           )}
 
+          {/* ── TAB STOCK ── */}
           {tab === 'stock' && (
             <>
               <div className="stats-grid">
@@ -1129,8 +1256,10 @@ const Inventario = () => {
                       return (
                         <tr key={p.id}>
                           <td>
-                            {p.imagen ? <img src={p.imagen} alt={p.nombre} style={{width:38,height:38,borderRadius:7,objectFit:'cover',border:'1px solid #1e2230',background:'#0d0f14',display:'block'}} onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='flex';}} /> : null}
-                            <div style={{width:38,height:38,borderRadius:7,background:'#0d0f14',border:'1px solid #1e2230',display:p.imagen?'none':'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>📦</div>
+                            {p.imagen
+                              ? <img src={p.imagen} alt={p.nombre} style={{width:38,height:38,borderRadius:7,objectFit:'cover',border:'1px solid #1e2230',background:'#0d0f14',display:'block'}} onError={e=>{e.target.style.display='none';}} />
+                              : <div style={{width:38,height:38,borderRadius:7,background:'#0d0f14',border:'1px solid #1e2230',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>📦</div>
+                            }
                           </td>
                           <td><span className="mono" style={{color:'#6b7280'}}>{p.codigo}</span></td>
                           <td style={{fontWeight:500}}>{p.nombre}</td>
@@ -1167,6 +1296,7 @@ const Inventario = () => {
             </>
           )}
 
+          {/* ── TAB CATÁLOGO ── */}
           {tab === 'catalogo' && (
             <>
               <div className="cat-toolbar">
@@ -1208,6 +1338,7 @@ const Inventario = () => {
             </>
           )}
 
+          {/* ── TAB COSTOS ── */}
           {tab === 'costos' && esAdmin && (
             <>
               <div className="costos-grid">
@@ -1254,6 +1385,7 @@ const Inventario = () => {
             </>
           )}
 
+          {/* ── TAB GASTOS ── */}
           {tab === 'gastos' && esAdmin && (
             <>
               <div className="stats-grid">
@@ -1421,6 +1553,7 @@ const Inventario = () => {
             </>
           )}
 
+          {/* ── TAB REPORTES ── */}
           {tab === 'reportes' && esAdmin && (
             <>
               <div className="rep-filtros">
@@ -1548,6 +1681,7 @@ const Inventario = () => {
             </>
           )}
 
+          {/* ── TAB VENTAS ── */}
           {tab === 'ventas' && (
             <>
               {ventaExitosa && (
@@ -1674,6 +1808,7 @@ const Inventario = () => {
             </>
           )}
 
+          {/* ── TAB USUARIOS ── */}
           {tab === 'usuarios' && esAdmin && (
             <>
               <div className="prod-form" style={{marginBottom:22}}>
@@ -1733,7 +1868,7 @@ const Inventario = () => {
         </main>
       </div>
 
-      {/* ── MODALES — idénticos al original ── */}
+      {/* ══════════════ MODALES ══════════════ */}
       {modalLimite && (
         <div className="modal-overlay" onClick={() => setModalLimite(false)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
