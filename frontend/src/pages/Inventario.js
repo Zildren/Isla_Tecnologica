@@ -402,7 +402,7 @@ const Inventario = () => {
   const userId    = parseInt(localStorage.getItem('userId') || '0');
   const esAdmin   = rol === 'ADMIN';
   // Solo usuario riempy (id=1 O matrícula 'riempy') ve Empresas
-  const esRiempy  = userId === 1 || matricula === 'riempy';
+  const esriempy = matricula === 'riempy';
 
   // ── Cargar productos con filtro de empresa ──
   const cargarProductos = useCallback(async () => {
@@ -984,7 +984,7 @@ const Inventario = () => {
             {!collapsed && <div className="sb-section-label">Principal</div>}
 
             {/* ══ BOTÓN EMPRESAS — solo visible para riempy (id=1) ══ */}
-            {esRiempy && (
+            {esriempy && (
               <button
                 className="sb-item"
                 onClick={() => navigate('/empresas')}
@@ -1109,7 +1109,7 @@ const Inventario = () => {
                     borderRadius:16, padding:'4px 12px', display:'flex', alignItems:'center', gap:5
                   }}>
                     🏢 Empresa ID: <strong>{empresaId}</strong>
-                    {esRiempy && <span style={{color:'#fbbf24', marginLeft:4}}>· riempy</span>}
+                    {esriempy && <span style={{color:'#fbbf24', marginLeft:4}}>· riempy</span>}
                   </div>
                   <button
                     className="btn ghost"

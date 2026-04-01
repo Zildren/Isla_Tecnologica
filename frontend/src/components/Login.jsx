@@ -35,7 +35,7 @@ const Login = () => {
                 // 🔑 Guardar token y empresaId
                 localStorage.setItem('token', resultado.token);
                 localStorage.setItem('empresaId', resultado.empresaId);
-                localStorage.setItem('usuarioLogueado', matriculaLimpia);
+                localStorage.setItem('usuarioLogueado', matriculaLimpia.toLowerCase());
                 localStorage.setItem('rolUsuario', status === "BIENVENIDO_ADMIN" ? 'ADMIN' : 'VENDEDOR');
                 navigate("/inventario");
             } else {
