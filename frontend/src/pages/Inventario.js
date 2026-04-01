@@ -1383,20 +1383,7 @@ const Inventario = () => {
           ══════════════════════════════════════════ */}
           {tab === 'catalogo' && (
             <>
-              {/* Banner de empresa activa */}
-              <div style={{
-                display:'flex', alignItems:'center', gap:10, marginBottom:16,
-                padding:'10px 16px', borderRadius:10,
-                background:'rgba(167,139,250,.07)', border:'1px solid rgba(167,139,250,.2)',
-                fontSize:12, color:'#a78bfa', fontFamily:'JetBrains Mono',
-              }}>
-                <span style={{fontSize:15}}>🏢</span>
-                <span>
-                  Mostrando catálogo de <strong>Empresa ID: {empresaId}</strong>
-                  {esriempy && <span style={{color:'#fbbf24', marginLeft:6}}>· riempy (admin global)</span>}
-                  {' '}· {productos.length} producto{productos.length !== 1 ? 's' : ''} en inventario
-                </span>
-              </div>
+              
 
               <div className="cat-toolbar">
                 <div className="search-wrap" style={{marginBottom:0, flex:1, maxWidth:320}}>
