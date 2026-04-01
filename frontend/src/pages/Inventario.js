@@ -179,7 +179,7 @@ const CATEGORIAS_DEFAULT = [
   'Otros',
 ];
 
-const STORAGE_KEY_CATS = 'categorias_producto_custom';
+const STORAGE_KEY_CATS = 'categorias_producto_v2';
 
 const getCategorias = () => {
   try {
