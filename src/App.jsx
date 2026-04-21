@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Inventario from './pages/Inventario';
 import Empresas from './pages/empresas';
+import Abonos from './pages/Abonos';
 
 const PrivateRoute = ({ children }) => {
   const usuario = localStorage.getItem('usuarioLogueado');
@@ -21,6 +22,11 @@ function App() {
       <Route path="/empresas" element={
         <PrivateRoute>
           <Empresas />
+        </PrivateRoute>
+      } />
+      <Route path="/abonos" element={
+        <PrivateRoute>
+          <Abonos />
         </PrivateRoute>
       } />
       <Route path="*" element={<Navigate to="/" replace />} />

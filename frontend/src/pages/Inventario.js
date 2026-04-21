@@ -1002,6 +1002,28 @@ const Inventario = () => {
                 )}
               </button>
             )}
+            {/* ══ BOTÓN ABONOS — solo visible para riempy (id=1) ══ */}
+            {esriempy && (
+             <button
+              className="sb-item"
+              onClick={() => navigate('/abonos')}
+              title={collapsed ? 'Abonos' : ''}
+              style={{
+              background: 'linear-gradient(90deg, rgba(52,211,153,.15) 0%, transparent 100%)',
+              borderLeft: '3px solid #34d399',
+              marginBottom: 4,
+    }}
+  >
+    <span className="sb-icon">💳</span>
+    {!collapsed && (
+      <span className="sb-label" style={{ color: '#34d399', fontWeight: 700 }}>
+        Abonos
+      </span>
+    )}
+  </button>
+)}
+
+            
 
             <button className={`sb-item ${tab==='inventario'?'active':''}`} onClick={() => setTab('inventario')} title={collapsed?'Inventario':''}>
               <span className="sb-icon">📦</span>
