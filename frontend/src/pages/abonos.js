@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const empresas = () => {
+const abonos = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,10 +17,10 @@ const empresas = () => {
           padding: '8px 16px', borderRadius: 8, cursor: 'pointer', marginBottom: 24 }}>
         ← Volver
       </button>
-      <h2>🏢 Empresas</h2>
+      <h2>🏢 abonos</h2>
       <p style={{ color: '#6b7280' }}>Próximamente...</p>
     </div>
   );
 };
 
-export default empresas;
+export default abonos;
