@@ -15,19 +15,13 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/inventario" element={
-          <PrivateRoute>
-            <Inventario />
-          </PrivateRoute>
+          <PrivateRoute><Inventario /></PrivateRoute>
         } />
         <Route path="/empresas" element={
-          <PrivateRoute>
-            <Empresas />
-          </PrivateRoute>
+          <PrivateRoute><Empresas /></PrivateRoute>
         } />
         <Route path="/abonos" element={
-          <PrivateRoute>
-            <Abonos />
-          </PrivateRoute>
+          <PrivateRoute><Abonos /></PrivateRoute>
         } />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
