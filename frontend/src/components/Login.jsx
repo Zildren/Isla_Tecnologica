@@ -153,7 +153,7 @@ const Login = () => {
                     </button>
                 </form>
 
-                <p className="login-footer">© 2026 · Isla Tecnológica · v1.0 </p>
+                <p className="login-footer">© 2026 · Isla Tecnológica · v2.0 </p>
             </div>
         </div>
     );
