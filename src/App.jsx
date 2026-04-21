@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Inventario from './pages/Inventario';
-import Empresas from './pages/empresas';
+import Empresas from './pages/Empresas';
 import Abonos from './pages/Abonos';
 
 const PrivateRoute = ({ children }) => {

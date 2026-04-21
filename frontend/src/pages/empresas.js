@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const empresas = () => {
+const Empresas = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -11,7 +11,7 @@ const empresas = () => {
   }, [navigate]);
 
   return (
-    <div style={{ padding: 40, color: '#e8eaf0' }}>
+    <div style={{ padding: 40, color: '#e8eaf0', background: '#0d0f14', minHeight: '100vh' }}>
       <button onClick={() => navigate('/inventario')}
         style={{ background: 'none', border: '1px solid #2a3045', color: '#9ca3af',
           padding: '8px 16px', borderRadius: 8, cursor: 'pointer', marginBottom: 24 }}>
@@ -23,4 +23,4 @@ const empresas = () => {
   );
 };
 
-export default empresas;
+export default Empresas;
