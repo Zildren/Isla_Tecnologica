@@ -175,9 +175,7 @@ const BarChartSVG = ({ data }) => {
 // ═══════════════════════════════════════════
 // SELECTOR DE CATEGORÍA CON AGREGAR CUSTOM
 // ═══════════════════════════════════════════
-const CATEGORIAS_DEFAULT = [
- 
-];
+const CATEGORIAS_DEFAULT = [];
 
 const STORAGE_KEY_CATS = 'categorias_producto_custom';
 
@@ -243,74 +241,32 @@ const CategoriaSelector = ({ value, onChange }) => {
               if (e.key === 'Escape') handleCancelar();
             }}
           />
-          <button
-            type="button"
-            title="Guardar categoría"
-            onClick={handleAgregar}
-            style={{
-              width: 34, height: 34, borderRadius: 8, border: '1px solid rgba(52,211,153,.5)',
-              background: 'rgba(52,211,153,.15)', color: '#34d399', cursor: 'pointer',
-              fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0, transition: 'all .15s', fontWeight: 700,
-            }}
+          <button type="button" title="Guardar categoría" onClick={handleAgregar}
+            style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid rgba(52,211,153,.5)', background: 'rgba(52,211,153,.15)', color: '#34d399', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .15s', fontWeight: 700 }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(52,211,153,.3)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(52,211,153,.15)'; }}
           >✓</button>
-          <button
-            type="button"
-            title="Cancelar"
-            onClick={handleCancelar}
-            style={{
-              width: 34, height: 34, borderRadius: 8, border: '1px solid rgba(248,113,113,.4)',
-              background: 'rgba(248,113,113,.1)', color: '#f87171', cursor: 'pointer',
-              fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0, transition: 'all .15s',
-            }}
+          <button type="button" title="Cancelar" onClick={handleCancelar}
+            style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid rgba(248,113,113,.4)', background: 'rgba(248,113,113,.1)', color: '#f87171', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .15s' }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(248,113,113,.25)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(248,113,113,.1)'; }}
           >✕</button>
         </div>
-        {error && (
-          <span style={{ fontSize: 11, color: '#f87171', fontFamily: 'JetBrains Mono, monospace', paddingLeft: 2 }}>
-            ⚠ {error}
-          </span>
-        )}
+        {error && <span style={{ fontSize: 11, color: '#f87171', fontFamily: 'JetBrains Mono, monospace', paddingLeft: 2 }}>⚠ {error}</span>}
       </div>
     );
   }
 
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 220 }}>
-      <select
-        className="inp"
-        style={{ flex: 1, minWidth: 160 }}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        required
-      >
+      <select className="inp" style={{ flex: 1, minWidth: 160 }} value={value} onChange={e => onChange(e.target.value)} required>
         <option value="" disabled>— Categoría —</option>
-        {categorias.map(c => (
-          <option key={c} value={c}>{c}</option>
-        ))}
+        {categorias.map(c => <option key={c} value={c}>{c}</option>)}
       </select>
-      <button
-        type="button"
-        title="Agregar nueva categoría"
-        onClick={() => setModo('nueva')}
-        style={{
-          width: 34, height: 34, borderRadius: 8, border: '1px solid #2a3045',
-          background: 'rgba(79,158,255,.1)', color: '#4f9eff', cursor: 'pointer',
-          fontSize: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0, transition: 'all .15s', fontWeight: 300, lineHeight: 1,
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.background = 'rgba(79,158,255,.25)';
-          e.currentTarget.style.borderColor = 'rgba(79,158,255,.5)';
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.background = 'rgba(79,158,255,.1)';
-          e.currentTarget.style.borderColor = '#2a3045';
-        }}
+      <button type="button" title="Agregar nueva categoría" onClick={() => setModo('nueva')}
+        style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid #2a3045', background: 'rgba(79,158,255,.1)', color: '#4f9eff', cursor: 'pointer', fontSize: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .15s', fontWeight: 300, lineHeight: 1 }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(79,158,255,.25)'; e.currentTarget.style.borderColor = 'rgba(79,158,255,.5)'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(79,158,255,.1)'; e.currentTarget.style.borderColor = '#2a3045'; }}
       >+</button>
     </div>
   );
@@ -391,6 +347,9 @@ const Inventario = () => {
   const [modalEliminarGasto, setModalEliminarGasto] = useState(null);
   const [gastoEditando, setGastoEditando]           = useState(null);
 
+  // ── ✅ NUEVO: Abonos para Reportes ──
+  const [abonosParaReportes, setAbonosParaReportes] = useState([]);
+
   // ── Layout ──
   const [tab, setTab]             = useState('inventario');
   const [collapsed, setCollapsed] = useState(false);
@@ -400,29 +359,55 @@ const Inventario = () => {
   const empresaId = parseInt(localStorage.getItem('empresaId') || '0');
   const userId    = parseInt(localStorage.getItem('userId') || '0');
   const esAdmin   = rol === 'ADMIN';
-  // Solo usuario riempy (id=1 O matrícula 'riempy') ve Empresas
-  const esriempy = matricula === 'riempy';
+  const esriempy  = matricula === 'riempy';
 
-  // ── Cargar productos con filtro de empresa ──
+  // ── Cargar productos ──
   const cargarProductos = useCallback(async () => {
-  try {
-    const d = await obtenerProductos();
-    if (Array.isArray(d)) {
-      setProductos(d); // ✅ Backend ya filtra por empresa vía JWT
-    }
-  } catch (err) {
-    console.error('Error cargando productos:', err);
-  }
-}, []);
+    try {
+      const d = await obtenerProductos();
+      if (Array.isArray(d)) setProductos(d);
+    } catch (err) { console.error('Error cargando productos:', err); }
+  }, []);
 
   const cargarGastos = async () => {
     const data = await obtenerGastos();
-    setGastos(data.map(g => ({
-      ...g,
-      registradoPor: g.registradoPor,
-      fecha: g.fecha,
-    })));
+    setGastos(data.map(g => ({ ...g, registradoPor: g.registradoPor, fecha: g.fecha })));
   };
+
+  // ── ✅ NUEVA FUNCIÓN: Cargar abonos para reportes ──
+  const cargarAbonosParaReportes = useCallback(async () => {
+    try {
+      const r = await fetch('/api/clientes', { headers: authHeaders() });
+      if (!r.ok) return;
+      const clientes = await r.json();
+      if (!Array.isArray(clientes)) return;
+
+      const resultado = [];
+      await Promise.all(clientes.map(async (cliente) => {
+        try {
+          const r2 = await fetch(`/api/clientes/${cliente.id}/abonos`, { headers: authHeaders() });
+          if (!r2.ok) return;
+          const abonos = await r2.json();
+          if (!Array.isArray(abonos)) return;
+
+          // Ordenar abonos por fecha/hora para calcular saldo acumulado
+          const sortedAbonos = [...abonos].sort((a, b) =>
+            new Date((a.fecha || '') + 'T' + (a.hora || '00:00:00')) -
+            new Date((b.fecha || '') + 'T' + (b.hora || '00:00:00'))
+          );
+
+          let acumulado = 0;
+          sortedAbonos.forEach(a => {
+            acumulado += parseFloat(a.monto || 0);
+            // El crédito está completo si el acumulado cubre el total
+            const esCompleto = acumulado >= parseFloat(cliente.montoTotal || 0) - 0.005;
+            resultado.push({ abono: a, cliente, esCompleto });
+          });
+        } catch {}
+      }));
+      setAbonosParaReportes(resultado);
+    } catch (e) { console.error('Error cargando abonos para reportes:', e); }
+  }, []);
 
   const agregarGasto = async () => {
     const desc  = nuevoGasto.descripcion.trim();
@@ -430,18 +415,10 @@ const Inventario = () => {
     if (!desc)                      return alert('Escribe una descripción');
     if (isNaN(monto) || monto <= 0) return alert('Ingresa un monto válido mayor a 0');
     try {
-      await registrarGasto({
-        descripcion: desc,
-        monto,
-        categoria: nuevoGasto.categoria,
-        fecha: nuevoGasto.fecha,
-        registradoPor: matricula,
-      });
+      await registrarGasto({ descripcion: desc, monto, categoria: nuevoGasto.categoria, fecha: nuevoGasto.fecha, registradoPor: matricula });
       setNuevoGasto({ descripcion:'', monto:'', categoria:'Operativo', fecha: new Date().toISOString().split('T')[0] });
       cargarGastos();
-    } catch (e) {
-      alert('❌ Error al registrar gasto: ' + e.message);
-    }
+    } catch (e) { alert('❌ Error al registrar gasto: ' + e.message); }
   };
 
   const guardarEdicionGasto = async () => {
@@ -449,17 +426,10 @@ const Inventario = () => {
     if (!gastoEditando.descripcion.trim()) return alert('Descripción requerida');
     if (isNaN(monto) || monto <= 0)        return alert('Monto inválido');
     try {
-      await actualizarGasto(gastoEditando.id, {
-        descripcion: gastoEditando.descripcion.trim(),
-        monto,
-        categoria: gastoEditando.categoria,
-        fecha: gastoEditando.fecha,
-      });
+      await actualizarGasto(gastoEditando.id, { descripcion: gastoEditando.descripcion.trim(), monto, categoria: gastoEditando.categoria, fecha: gastoEditando.fecha });
       setGastoEditando(null);
       cargarGastos();
-    } catch (e) {
-      alert('❌ Error al editar gasto: ' + e.message);
-    }
+    } catch (e) { alert('❌ Error al editar gasto: ' + e.message); }
   };
 
   const confirmarEliminarGasto = async () => {
@@ -467,10 +437,7 @@ const Inventario = () => {
       await deleteGasto(modalEliminarGasto.id);
       setModalEliminarGasto(null);
       cargarGastos();
-    } catch (e) {
-      alert('❌ Error al eliminar: ' + e.message);
-      setModalEliminarGasto(null);
-    }
+    } catch (e) { alert('❌ Error al eliminar: ' + e.message); setModalEliminarGasto(null); }
   };
 
   useEffect(() => {
@@ -484,7 +451,6 @@ const Inventario = () => {
     }
   }, [navigate, cargarProductos]);
 
-  // ── Recarga de productos al entrar al Catálogo ──
   useEffect(() => {
     if (tab === 'catalogo') {
       setCargandoCatalogo(true);
@@ -492,7 +458,7 @@ const Inventario = () => {
     }
   }, [tab, cargarProductos]);
 
-  const cargarVentas    = async () => { const d = await obtenerVentas(); if (d) setTodasLasVentas(d); };
+  const cargarVentas = async () => { const d = await obtenerVentas(); if (d) setTodasLasVentas(d); };
 
   const categoriasProducto = [...new Set(productos.map(p => p.categoria).filter(Boolean))].sort();
 
@@ -511,10 +477,7 @@ const Inventario = () => {
       setNuevoProd(PROD_VACIO);
       setEditandoId(null);
       cargarProductos();
-    } catch (err) {
-      console.error('Error al guardar producto:', err);
-      alert('❌ Error: ' + err.message);
-    }
+    } catch (err) { console.error('Error al guardar producto:', err); alert('❌ Error: ' + err.message); }
   };
 
   const prepararEdicion = (p) => {
@@ -544,9 +507,7 @@ const Inventario = () => {
       await deleteProducto(p.id);
       setProductos(prev => prev.filter(x => x.id !== p.id));
       alert(`✅ Producto "${p.nombre}" eliminado`);
-    } catch (e) {
-      alert('❌ ' + e.message);
-    }
+    } catch (e) { alert('❌ ' + e.message); }
   };
 
   const confirmarAgregarStock = async () => {
@@ -580,33 +541,19 @@ const Inventario = () => {
     if (!formUser.matricula || !formUser.password) return alert('Llena todos los campos');
     setCargandoUser(true);
     try {
-      const r = await fetch('/api/usuarios', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          matricula: formUser.matricula,
-          password: formUser.password,
-          rol: formUser.rol,
-          empresa: { id: empresaId },
-        }),
-      });
+      const r = await fetch('/api/usuarios', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ matricula: formUser.matricula, password: formUser.password, rol: formUser.rol, empresa: { id: empresaId } }) });
       if (r.status === 401) { handleLogout(); return; }
       if (!r.ok) { const msg = await r.text(); throw new Error(msg); }
       setFormUser({ matricula: '', password: '', rol: 'VENDEDOR' });
       alert('✅ Usuario agregado con éxito');
       cargarUsuarios();
-    } catch (e) {
-      alert('Error al agregar usuario: ' + e.message);
-    } finally { setCargandoUser(false); }
+    } catch (e) { alert('Error al agregar usuario: ' + e.message); }
+    finally { setCargandoUser(false); }
   };
 
   const toggleBloqueo = async (id, bloqueado) => {
     try {
-      const r = await fetch(`/api/usuarios/${id}/bloquear`, {
-        method: 'PUT',
-        headers: authHeaders(),
-        body: JSON.stringify({ bloqueado: !bloqueado }),
-      });
+      const r = await fetch(`/api/usuarios/${id}/bloquear`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ bloqueado: !bloqueado }) });
       if (r.status === 401) { handleLogout(); return; }
       if (!r.ok) throw new Error('No se pudo cambiar el estado');
       cargarUsuarios();
@@ -616,10 +563,7 @@ const Inventario = () => {
   const eliminarUsuario = async (id, matriculaU) => {
     if (!window.confirm(`¿Eliminar al usuario "${matriculaU}"?`)) return;
     try {
-      const r = await fetch(`/api/usuarios/${id}`, {
-        method: 'DELETE',
-        headers: authHeaders(),
-      });
+      const r = await fetch(`/api/usuarios/${id}`, { method: 'DELETE', headers: authHeaders() });
       if (r.status === 401) { handleLogout(); return; }
       if (!r.ok) throw new Error('Error en el servidor al eliminar');
       const resData = await r.json();
@@ -714,10 +658,7 @@ const Inventario = () => {
       await deleteVenta(venta.id);
       setTodasLasVentas(prev => prev.filter(v => v.id !== venta.id));
       setModalConfirmarEliminar(null);
-    } catch (e) {
-      alert('❌ ' + e.message);
-      setModalConfirmarEliminar(null);
-    }
+    } catch (e) { alert('❌ ' + e.message); setModalConfirmarEliminar(null); }
   };
 
   // ── Stats inventario ──
@@ -728,22 +669,65 @@ const Inventario = () => {
   const totalVentaAprox    = productos.reduce((s,p) => s + p.precioVenta * p.stock, 0);
   const bajoStock          = productos.filter(p => p.stock <= limiteStock).length;
 
-  // ── Reportes: filtrado ──
+  // ── ✅ NUEVO: Convertir abonos a entradas tipo "venta" para los reportes ──
+  const entradasAbonos = abonosParaReportes.map(({ abono, cliente, esCompleto }) => {
+    // Calcular costo del producto solo cuando el crédito está completamente pagado
+    let costo = 0;
+    if (esCompleto) {
+      // Parsear descripción: "NombreProducto xCantidad — nota opcional"
+      const desc = cliente.descripcion || '';
+      const match = desc.match(/^(.+?)\s+x(\d+)/i);
+      if (match) {
+        const productName = match[1].trim();
+        const qty = parseInt(match[2]);
+        const prod = productos.find(p =>
+          p.nombre.toLowerCase().trim() === productName.toLowerCase()
+        );
+        if (prod) costo = prod.precioCompra * qty;
+      }
+    }
+
+    const fechaStr = (abono.fecha || '') + 'T' + (abono.hora ? abono.hora : '12:00:00');
+
+    return {
+      tipo: 'abono',
+      fechaVenta: fechaStr,
+      // Concepto visible en la tabla
+      nombreProducto: cliente.descripcion
+        ? `${cliente.nombre} · ${cliente.descripcion}`
+        : cliente.nombre,
+      cantidad: 1,
+      vendedorMatricula: abono.registradoPor,
+      total: parseFloat(abono.monto || 0),
+      precioCompra: costo,   // 0 mientras no esté liquidado; costo real al completarse
+      abonoNota: abono.nota,
+      esCreditoCompleto: esCompleto,
+      clienteNombre: cliente.nombre,
+    };
+  });
+
+  // ── Reportes: filtrado (ventas normales + abonos juntos) ──
   const fechaRef = new Date(busquedaFecha + 'T12:00:00');
-  const ventasFiltradas = todasLasVentas.filter(v => {
+
+  // ✅ MODIFICADO: incluir entradasAbonos junto a ventas normales
+  const ventasFiltradas = [...todasLasVentas, ...entradasAbonos].filter(v => {
     const fv = new Date(v.fechaVenta);
     const coincideTiempo =
       filtro === 'dia'  ? fv.toDateString() === fechaRef.toDateString() :
       filtro === 'mes'  ? fv.getMonth() === fechaRef.getMonth() && fv.getFullYear() === fechaRef.getFullYear() :
                           fv.getFullYear() === fechaRef.getFullYear();
     const coincideTexto =
-      v.vendedorMatricula?.toLowerCase().includes(textoBusqueda.toLowerCase()) ||
-      v.nombreProducto?.toLowerCase().includes(textoBusqueda.toLowerCase());
+      (v.vendedorMatricula || '').toLowerCase().includes(textoBusqueda.toLowerCase()) ||
+      (v.nombreProducto   || '').toLowerCase().includes(textoBusqueda.toLowerCase()) ||
+      (v.clienteNombre    || '').toLowerCase().includes(textoBusqueda.toLowerCase());
     return coincideTiempo && coincideTexto;
   });
 
   const totalVendido  = ventasFiltradas.reduce((s,v) => s + (v.total ?? 0), 0);
-  const totalGastos   = ventasFiltradas.reduce((s,v) => s + (v.precioCompra ?? 0) * (v.cantidad ?? 0), 0);
+  const totalGastos   = ventasFiltradas.reduce((s,v) => {
+    if (v.tipo === 'abono') return s + (v.precioCompra ?? 0);          // costo abono (solo si completo)
+    return s + (v.precioCompra ?? 0) * (v.cantidad ?? 0);             // costo venta normal
+  }, 0);
   const totalTickets  = ventasFiltradas.length;
 
   const gastosPeriodo = gastos.filter(g => {
@@ -759,6 +743,7 @@ const Inventario = () => {
   const gananciaNeta     = totalVendido - totalGastos - totalGastosExtra;
 
   const topProductos = ventasFiltradas.reduce((acc, v) => {
+    if (v.tipo === 'abono') return acc; // no contar abonos en top productos
     acc[v.nombreProducto] = (acc[v.nombreProducto] || 0) + (v.cantidad ?? 0);
     return acc;
   }, {});
@@ -771,14 +756,17 @@ const Inventario = () => {
 
   const ventasPorDia = Array.from({ length: diasDelMes }, (_, i) => {
     const dia = i + 1;
-    const ventasDia = todasLasVentas.filter(v => {
+    const entradasDia = [...todasLasVentas, ...entradasAbonos].filter(v => {
       const fv = new Date(v.fechaVenta);
       return fv.getDate() === dia && fv.getMonth() === mesActual && fv.getFullYear() === añoActual;
     });
     return {
       dia: `${dia}`,
-      ingresos: parseFloat(ventasDia.reduce((s,v) => s + (v.total ?? 0), 0).toFixed(2)),
-      ganancia: parseFloat(ventasDia.reduce((s,v) => s + ((v.total ?? 0) - (v.precioCompra ?? 0) * (v.cantidad ?? 0)), 0).toFixed(2)),
+      ingresos: parseFloat(entradasDia.reduce((s,v) => s + (v.total ?? 0), 0).toFixed(2)),
+      ganancia: parseFloat(entradasDia.reduce((s,v) => {
+        const costo = v.tipo === 'abono' ? (v.precioCompra ?? 0) : (v.precioCompra ?? 0) * (v.cantidad ?? 0);
+        return s + ((v.total ?? 0) - costo);
+      }, 0).toFixed(2)),
     };
   });
 
@@ -787,27 +775,31 @@ const Inventario = () => {
     const fecha = new Date(añoActual, mesActual - 5 + i, 1);
     const m = fecha.getMonth();
     const a = fecha.getFullYear();
-    const ventasMes = todasLasVentas.filter(v => {
+    const entradasMes = [...todasLasVentas, ...entradasAbonos].filter(v => {
       const fv = new Date(v.fechaVenta);
       return fv.getMonth() === m && fv.getFullYear() === a;
     });
     return {
       mes: MESES[m],
-      ingresos: parseFloat(ventasMes.reduce((s,v) => s + (v.total ?? 0), 0).toFixed(2)),
-      ganancia: parseFloat(ventasMes.reduce((s,v) => s + ((v.total ?? 0) - (v.precioCompra ?? 0) * (v.cantidad ?? 0)), 0).toFixed(2)),
-      costo:    parseFloat(ventasMes.reduce((s,v) => s + (v.precioCompra ?? 0) * (v.cantidad ?? 0), 0).toFixed(2)),
+      ingresos: parseFloat(entradasMes.reduce((s,v) => s + (v.total ?? 0), 0).toFixed(2)),
+      ganancia: parseFloat(entradasMes.reduce((s,v) => {
+        const costo = v.tipo === 'abono' ? (v.precioCompra ?? 0) : (v.precioCompra ?? 0) * (v.cantidad ?? 0);
+        return s + ((v.total ?? 0) - costo);
+      }, 0).toFixed(2)),
+      costo: parseFloat(entradasMes.reduce((s,v) => {
+        return s + (v.tipo === 'abono' ? (v.precioCompra ?? 0) : (v.precioCompra ?? 0) * (v.cantidad ?? 0));
+      }, 0).toFixed(2)),
     };
   });
 
-  // ── Catálogo: filtrado por empresa + texto + categoría ──
+  // ── Catálogo ──
   const categoriasCat = ['Todas', ...new Set(productos.map(p => p.categoria).filter(Boolean))];
-
   const prodsCatalogo = productos.filter(p => {
-  const matchCat  = filtroCat === 'Todas' || p.categoria === filtroCat;
-  const matchText = p.nombre.toLowerCase().includes(busquedaCatalogo.toLowerCase()) ||
-                    p.codigo.toLowerCase().includes(busquedaCatalogo.toLowerCase());
-  return matchCat && matchText; // ✅ Backend ya garantiza que son de esta empresa
-});
+    const matchCat  = filtroCat === 'Todas' || p.categoria === filtroCat;
+    const matchText = p.nombre.toLowerCase().includes(busquedaCatalogo.toLowerCase()) ||
+                      p.codigo.toLowerCase().includes(busquedaCatalogo.toLowerCase());
+    return matchCat && matchText;
+  });
 
   const productosFiltradosVenta = productos.filter(p =>
     p.nombre.toLowerCase().includes(busquedaVenta.toLowerCase()) ||
@@ -828,9 +820,7 @@ const Inventario = () => {
     })
     .sort((a, b) => b.stock - a.stock);
 
-  const filtroEstLabel = {
-    todos: 'Stock General', ok: 'Productos OK', low: 'Stock Bajo', critical: 'Sin Stock',
-  }[filtroEstStock];
+  const filtroEstLabel = { todos: 'Stock General', ok: 'Productos OK', low: 'Stock Bajo', critical: 'Sin Stock' }[filtroEstStock];
 
   const gastosCategs     = ['Todas', ...new Set(gastos.map(g => g.categoria))];
   const gastosFiltrados  = gastos
@@ -860,10 +850,7 @@ const Inventario = () => {
       const unidadesFiltradas = productosStock.reduce((s,p) => s + p.stock, 0);
       const capitalFiltrado   = productosStock.reduce((s,p) => s + p.precioCompra * p.stock, 0);
       const gananciaFiltrada  = productosStock.reduce((s,p) => s + (p.precioVenta - p.precioCompra) * p.stock, 0);
-      const badgeColor =
-        filtroEstStock === 'ok'       ? [22,163,74] :
-        filtroEstStock === 'low'      ? [202,138,4] :
-        filtroEstStock === 'critical' ? [220,38,38] : [79,158,255];
+      const badgeColor = filtroEstStock === 'ok' ? [22,163,74] : filtroEstStock === 'low' ? [202,138,4] : filtroEstStock === 'critical' ? [220,38,38] : [79,158,255];
       import('jspdf-autotable').then(({ default: autoTable }) => {
         doc.setFillColor(13, 15, 20); doc.rect(0, 0, 297, 34, 'F');
         doc.setDrawColor(...badgeColor); doc.setLineWidth(0.8); doc.line(0, 34, 297, 34);
@@ -881,10 +868,7 @@ const Inventario = () => {
         doc.text(`Ganancia aprox.: +$${gananciaFiltrada.toFixed(2)}`, 210, 28);
         const filas = productosStock.map(p => {
           const st = stockStatus(p.stock, limiteStock);
-          return [p.codigo, p.nombre, p.categoria || '—', p.stock,
-            st === 'critical' ? 'SIN STOCK' : st === 'low' ? 'STOCK BAJO' : 'OK',
-            `$${p.precioCompra.toFixed(2)}`, `$${p.precioVenta.toFixed(2)}`,
-            `+$${(p.precioVenta - p.precioCompra).toFixed(2)}`, `$${(p.precioCompra * p.stock).toFixed(2)}`];
+          return [p.codigo, p.nombre, p.categoria || '—', p.stock, st === 'critical' ? 'SIN STOCK' : st === 'low' ? 'STOCK BAJO' : 'OK', `$${p.precioCompra.toFixed(2)}`, `$${p.precioVenta.toFixed(2)}`, `+$${(p.precioVenta - p.precioCompra).toFixed(2)}`, `$${(p.precioCompra * p.stock).toFixed(2)}`];
         });
         autoTable(doc, {
           startY: 39,
@@ -893,11 +877,7 @@ const Inventario = () => {
           styles: { fontSize:8, cellPadding:3, font:'helvetica', textColor:[30,34,48] },
           headStyles: { fillColor:[30,34,48], textColor:[255,255,255], fontStyle:'bold', fontSize:8 },
           alternateRowStyles: { fillColor:[248,249,252] },
-          columnStyles: {
-            0:{cellWidth:22},1:{cellWidth:60},2:{cellWidth:28},3:{halign:'center',cellWidth:18},
-            4:{halign:'center',cellWidth:24},5:{halign:'right',cellWidth:24},6:{halign:'right',cellWidth:26},
-            7:{halign:'right',cellWidth:22},8:{halign:'right',cellWidth:26},
-          },
+          columnStyles: { 0:{cellWidth:22},1:{cellWidth:60},2:{cellWidth:28},3:{halign:'center',cellWidth:18},4:{halign:'center',cellWidth:24},5:{halign:'right',cellWidth:24},6:{halign:'right',cellWidth:26},7:{halign:'right',cellWidth:22},8:{halign:'right',cellWidth:26} },
           willDrawCell: (data) => { if (data.column.index === 4 && data.section === 'body') data.cell.text = []; },
           didDrawCell: (data) => {
             if (data.column.index === 4 && data.section === 'body') {
@@ -923,10 +903,7 @@ const Inventario = () => {
         doc.text(`Isla Tecnológica — Sistema POS  ·  Filtro: ${filtroEstLabel}`, 14, doc.internal.pageSize.height - 5);
         doc.save(`stock-${filtroEstStock}-isla-tecnologica-${new Date().toISOString().split('T')[0]}.pdf`);
         setGenerandoPDF(false);
-      }).catch(() => {
-        doc.save(`stock-fallback-${new Date().toISOString().split('T')[0]}.pdf`);
-        setGenerandoPDF(false);
-      });
+      }).catch(() => { doc.save(`stock-fallback-${new Date().toISOString().split('T')[0]}.pdf`); setGenerandoPDF(false); });
     });
   };
 
@@ -941,13 +918,7 @@ const Inventario = () => {
   };
 
   const colorCategoria = (cat) => {
-    const mapa = {
-      'Operativo':'#4f9eff','Renta / Local':'#a78bfa',
-      'Servicios (luz, agua, internet)':'#34d399','Transporte / Envíos':'#fbbf24',
-      'Salarios':'#f472b6','Compra de mercancía':'#f87171',
-      'Marketing / Publicidad':'#fb923c','Mantenimiento':'#60a5fa',
-      'Equipo / Herramientas':'#2dd4bf','Otros':'#9ca3af',
-    };
+    const mapa = { 'Operativo':'#4f9eff','Renta / Local':'#a78bfa','Servicios (luz, agua, internet)':'#34d399','Transporte / Envíos':'#fbbf24','Salarios':'#f472b6','Compra de mercancía':'#f87171','Marketing / Publicidad':'#fb923c','Mantenimiento':'#60a5fa','Equipo / Herramientas':'#2dd4bf','Otros':'#9ca3af' };
     return mapa[cat] || '#6b7280';
   };
 
@@ -968,9 +939,7 @@ const Inventario = () => {
             )}
           </div>
           <div className="sb-user">
-            <div className={`sb-avatar ${esAdmin ? 'admin' : 'vendedor'}`}>
-              {matricula.charAt(0).toUpperCase()}
-            </div>
+            <div className={`sb-avatar ${esAdmin ? 'admin' : 'vendedor'}`}>{matricula.charAt(0).toUpperCase()}</div>
             {!collapsed && (
               <div className="sb-user-info">
                 <div className="sb-user-name">{matricula}</div>
@@ -981,50 +950,20 @@ const Inventario = () => {
 
           <nav className="sb-nav">
             {!collapsed && <div className="sb-section-label">Principal</div>}
-
-            {/* ══ BOTÓN EMPRESAS — solo visible para riempy (id=1) ══ */}
             {esriempy && (
-              <button
-                className="sb-item"
-                onClick={() => navigate('/empresas')}
-                title={collapsed ? 'Empresas' : ''}
-                style={{
-                  background: 'linear-gradient(90deg, rgba(167,139,250,.15) 0%, transparent 100%)',
-                  borderLeft: '3px solid #a78bfa',
-                  marginBottom: 4,
-                }}
-              >
+              <button className="sb-item" onClick={() => navigate('/empresas')} title={collapsed ? 'Empresas' : ''}
+                style={{ background: 'linear-gradient(90deg, rgba(167,139,250,.15) 0%, transparent 100%)', borderLeft: '3px solid #a78bfa', marginBottom: 4 }}>
                 <span className="sb-icon">🏢</span>
-                {!collapsed && (
-                  <span className="sb-label" style={{ color: '#a78bfa', fontWeight: 700 }}>
-                    Empresas
-                  </span>
-                )}
+                {!collapsed && <span className="sb-label" style={{ color: '#a78bfa', fontWeight: 700 }}>Empresas</span>}
               </button>
             )}
-            {/* ══ BOTÓN ABONOS — solo visible para riempy (id=1) ══ */}
             {esriempy && (
-             <button
-              className="sb-item"
-              onClick={() => navigate('/abonos')}
-              title={collapsed ? 'Abonos' : ''}
-              style={{
-              background: 'linear-gradient(90deg, rgba(52,211,153,.15) 0%, transparent 100%)',
-              borderLeft: '3px solid #34d399',
-              marginBottom: 4,
-    }}
-  >
-    <span className="sb-icon">💳</span>
-    {!collapsed && (
-      <span className="sb-label" style={{ color: '#34d399', fontWeight: 700 }}>
-        Abonos
-      </span>
-    )}
-  </button>
-)}
-
-            
-
+              <button className="sb-item" onClick={() => navigate('/abonos')} title={collapsed ? 'Abonos' : ''}
+                style={{ background: 'linear-gradient(90deg, rgba(52,211,153,.15) 0%, transparent 100%)', borderLeft: '3px solid #34d399', marginBottom: 4 }}>
+                <span className="sb-icon">💳</span>
+                {!collapsed && <span className="sb-label" style={{ color: '#34d399', fontWeight: 700 }}>Abonos</span>}
+              </button>
+            )}
             <button className={`sb-item ${tab==='inventario'?'active':''}`} onClick={() => setTab('inventario')} title={collapsed?'Inventario':''}>
               <span className="sb-icon">📦</span>
               {!collapsed && <span className="sb-label">Inventario</span>}
@@ -1061,7 +1000,8 @@ const Inventario = () => {
             </button>
             {esAdmin && (
               <>
-                <button className={`sb-item ${tab==='reportes'?'active':''}`} onClick={() => { setTab('reportes'); cargarVentas(); }} title={collapsed?'Reportes':''}>
+                {/* ✅ MODIFICADO: también carga abonos al entrar a reportes */}
+                <button className={`sb-item ${tab==='reportes'?'active':''}`} onClick={() => { setTab('reportes'); cargarVentas(); cargarAbonosParaReportes(); }} title={collapsed?'Reportes':''}>
                   <span className="sb-icon">📈</span>
                   {!collapsed && <span className="sb-label">Reportes</span>}
                 </button>
@@ -1090,9 +1030,7 @@ const Inventario = () => {
               </button>
             </div>
             <div className="sb-collapse">
-              <button className="sb-collapse-btn" onClick={() => setCollapsed(c => !c)}>
-                {collapsed ? '▶' : '◀'}
-              </button>
+              <button className="sb-collapse-btn" onClick={() => setCollapsed(c => !c)}>{collapsed ? '▶' : '◀'}</button>
             </div>
           </div>
         </aside>
@@ -1116,31 +1054,18 @@ const Inventario = () => {
                 </div>
               )}
               {tab === 'reportes' && (
-                <button className="btn ghost" style={{fontSize:12, padding:'7px 14px'}} onClick={cargarVentas}>🔄 Actualizar</button>
+                <button className="btn ghost" style={{fontSize:12, padding:'7px 14px'}} onClick={() => { cargarVentas(); cargarAbonosParaReportes(); }}>🔄 Actualizar</button>
               )}
               {tab === 'stock' && (
                 <button className="btn ghost" style={{fontSize:12, padding:'7px 14px'}} onClick={cargarProductos}>🔄 Actualizar</button>
               )}
-              {/* ── Botón actualizar catálogo + info empresa ── */}
               {tab === 'catalogo' && (
                 <div style={{display:'flex', alignItems:'center', gap:10}}>
-                  <div style={{
-                    fontSize:11, color:'#a78bfa', fontFamily:'JetBrains Mono',
-                    background:'rgba(167,139,250,.1)', border:'1px solid rgba(167,139,250,.25)',
-                    borderRadius:16, padding:'4px 12px', display:'flex', alignItems:'center', gap:5
-                  }}>
+                  <div style={{ fontSize:11, color:'#a78bfa', fontFamily:'JetBrains Mono', background:'rgba(167,139,250,.1)', border:'1px solid rgba(167,139,250,.25)', borderRadius:16, padding:'4px 12px', display:'flex', alignItems:'center', gap:5 }}>
                     🏢 Empresa ID: <strong>{empresaId}</strong>
                     {esriempy && <span style={{color:'#fbbf24', marginLeft:4}}>· riempy</span>}
                   </div>
-                  <button
-                    className="btn ghost"
-                    style={{fontSize:12, padding:'7px 14px'}}
-                    onClick={() => {
-                      setCargandoCatalogo(true);
-                      cargarProductos().finally(() => setCargandoCatalogo(false));
-                    }}
-                    disabled={cargandoCatalogo}
-                  >
+                  <button className="btn ghost" style={{fontSize:12, padding:'7px 14px'}} onClick={() => { setCargandoCatalogo(true); cargarProductos().finally(() => setCargandoCatalogo(false)); }} disabled={cargandoCatalogo}>
                     {cargandoCatalogo ? '⏳ Cargando...' : '🔄 Actualizar'}
                   </button>
                 </div>
@@ -1179,10 +1104,7 @@ const Inventario = () => {
                       <input className="inp" style={{width:85}} type="number" placeholder="Stock" value={nuevoProd.stock} onChange={e => setNuevoProd({...nuevoProd, stock:parseInt(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Costo $" value={nuevoProd.precioCompra} onChange={e => setNuevoProd({...nuevoProd, precioCompra:parseFloat(e.target.value)})} required />
                       <input className="inp" style={{width:120}} type="number" step="0.01" placeholder="Venta $" value={nuevoProd.precioVenta} onChange={e => setNuevoProd({...nuevoProd, precioVenta:parseFloat(e.target.value)})} required />
-                      <CategoriaSelector
-                        value={nuevoProd.categoria}
-                        onChange={val => setNuevoProd({...nuevoProd, categoria: val})}
-                      />
+                      <CategoriaSelector value={nuevoProd.categoria} onChange={val => setNuevoProd({...nuevoProd, categoria: val})} />
                     </div>
                     <div style={{marginTop:12}}>
                       <div style={{fontSize:11, color:'#6b7280', marginBottom:6, fontFamily:'JetBrains Mono'}}>🖼️ Imagen del producto</div>
@@ -1207,8 +1129,7 @@ const Inventario = () => {
                           </label>
                           <div style={{display:'flex', alignItems:'center', gap:8}}>
                             <span style={{fontSize:10, color:'#4b5563', whiteSpace:'nowrap', fontFamily:'JetBrains Mono'}}>o pega una URL:</span>
-                            <input className="inp" style={{flex:1, fontSize:12}}
-                              placeholder="https://ejemplo.com/imagen.jpg"
+                            <input className="inp" style={{flex:1, fontSize:12}} placeholder="https://ejemplo.com/imagen.jpg"
                               value={nuevoProd.imagen && !nuevoProd.imagen.startsWith('data:') ? nuevoProd.imagen : ''}
                               onChange={e => setNuevoProd({...nuevoProd, imagen: e.target.value})}
                             />
@@ -1398,15 +1319,9 @@ const Inventario = () => {
             </>
           )}
 
-          {/* ══════════════════════════════════════════
-              ── TAB CATÁLOGO ──
-              Muestra productos filtrados por empresaId.
-              Se recarga automáticamente al entrar al tab.
-          ══════════════════════════════════════════ */}
+          {/* ── TAB CATÁLOGO ── */}
           {tab === 'catalogo' && (
             <>
-              
-
               <div className="cat-toolbar">
                 <div className="search-wrap" style={{marginBottom:0, flex:1, maxWidth:320}}>
                   <span className="search-icon">🔍</span>
@@ -1418,52 +1333,21 @@ const Inventario = () => {
                   ))}
                 </div>
                 <div style={{fontSize:12, color:'#4b5563', whiteSpace:'nowrap'}}>
-                  {cargandoCatalogo
-                    ? <span style={{color:'#4f9eff'}}>⏳ Cargando...</span>
-                    : <>{prodsCatalogo.length} producto{prodsCatalogo.length !== 1 ? 's' : ''}</>
-                  }
+                  {cargandoCatalogo ? <span style={{color:'#4f9eff'}}>⏳ Cargando...</span> : <>{prodsCatalogo.length} producto{prodsCatalogo.length !== 1 ? 's' : ''}</>}
                 </div>
               </div>
-
-              {/* Estado vacío diferenciado */}
               {!cargandoCatalogo && prodsCatalogo.length === 0 && (
-                <div style={{
-                  textAlign:'center', padding:'60px 0', color:'#374151',
-                  display:'flex', flexDirection:'column', alignItems:'center', gap:14,
-                }}>
+                <div style={{ textAlign:'center', padding:'60px 0', color:'#374151', display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
                   <span style={{fontSize:40}}>📦</span>
                   <div style={{fontSize:15, color:'#4b5563', fontWeight:600}}>
-                    {productos.length === 0
-                      ? `Sin productos para la empresa  ${empresaId}`
-                      : 'Sin resultados para esta búsqueda'}
+                    {productos.length === 0 ? `Sin productos para la empresa ${empresaId}` : 'Sin resultados para esta búsqueda'}
                   </div>
-                  {productos.length === 0 && (
-                    <div style={{fontSize:12, color:'#374151', fontFamily:'JetBrains Mono', maxWidth:360, lineHeight:1.7}}>
-                      Asegúrate de que los productos estén asignados a la empresa con ID <strong style={{color:'#a78bfa'}}>{empresaId}</strong>.
-                      Puedes agregar productos desde la sección <strong>Inventario</strong>.
-                    </div>
-                  )}
-                  {esAdmin && productos.length === 0 && (
-                    <button
-                      className="btn blue"
-                      style={{marginTop:6, padding:'9px 22px', fontSize:13}}
-                      onClick={() => setTab('inventario')}
-                    >
-                      ➕ Ir a Inventario
-                    </button>
-                  )}
                 </div>
               )}
-
-              {/* Skeleton de carga */}
               {cargandoCatalogo && (
                 <div className="cat-grid">
                   {Array.from({length: 8}).map((_, i) => (
-                    <div key={i} style={{
-                      background:'#0d0f14', border:'1px solid #1e2230',
-                      borderRadius:14, overflow:'hidden', animation:'pulse 1.5s ease-in-out infinite',
-                      opacity: 0.5 + (i % 3) * 0.1,
-                    }}>
+                    <div key={i} style={{ background:'#0d0f14', border:'1px solid #1e2230', borderRadius:14, overflow:'hidden', animation:'pulse 1.5s ease-in-out infinite', opacity: 0.5 + (i % 3) * 0.1 }}>
                       <div style={{height:160, background:'#1e2230'}}/>
                       <div style={{padding:'14px 16px', display:'flex', flexDirection:'column', gap:8}}>
                         <div style={{height:10, background:'#1e2230', borderRadius:4, width:'40%'}}/>
@@ -1474,8 +1358,6 @@ const Inventario = () => {
                   ))}
                 </div>
               )}
-
-              {/* Grid de productos */}
               {!cargandoCatalogo && prodsCatalogo.length > 0 && (
                 <div className="cat-grid">
                   {prodsCatalogo.map(p => {
@@ -1663,9 +1545,7 @@ const Inventario = () => {
                               {CATEGORIAS_GASTO.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                           ) : (
-                            <span style={{ fontSize:11, fontWeight:700, fontFamily:'JetBrains Mono, monospace', padding:'3px 10px', borderRadius:20,
-                              background:`${colorCategoria(g.categoria)}18`, color: colorCategoria(g.categoria),
-                              border:`1px solid ${colorCategoria(g.categoria)}35`, whiteSpace:'nowrap' }}>
+                            <span style={{ fontSize:11, fontWeight:700, fontFamily:'JetBrains Mono, monospace', padding:'3px 10px', borderRadius:20, background:`${colorCategoria(g.categoria)}18`, color: colorCategoria(g.categoria), border:`1px solid ${colorCategoria(g.categoria)}35`, whiteSpace:'nowrap' }}>
                               {g.categoria}
                             </span>
                           )}
@@ -1733,20 +1613,33 @@ const Inventario = () => {
                   <input className="inp" type="date" value={busquedaFecha} onChange={e => setBusquedaFecha(e.target.value)} />
                 </div>
                 <div className="rep-filtro-item" style={{flex:1}}>
-                  <label className="rep-label">Buscar vendedor o producto</label>
+                  <label className="rep-label">Buscar vendedor, producto o cliente</label>
                   <div className="search-wrap" style={{marginBottom:0}}>
                     <span className="search-icon">🔍</span>
                     <input className="search-input" placeholder="Buscar..." value={textoBusqueda} onChange={e => setTextoBusqueda(e.target.value)} />
                   </div>
                 </div>
               </div>
+
+              {/* ✅ Aviso de abonos incluidos */}
+              {entradasAbonos.length > 0 && (
+                <div style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 16px', marginBottom:16,
+                  background:'rgba(52,211,153,.07)', border:'1px solid rgba(52,211,153,.2)', borderRadius:10, fontSize:12, color:'#34d399', fontFamily:'JetBrains Mono, monospace' }}>
+                  <span style={{fontSize:16}}>💳</span>
+                  <span>
+                    Se incluyen <strong>{entradasAbonos.length}</strong> abono(s) de créditos en este reporte.
+                    Los abonos muestran costo solo cuando el crédito está completamente liquidado.
+                  </span>
+                </div>
+              )}
+
               <div className="rep-kpi-grid" style={{gridTemplateColumns:'repeat(5, 1fr)'}}>
                 <div className="rep-kpi-card ingresos">
                   <div className="rep-kpi-icon">💵</div>
                   <div className="rep-kpi-label">Ingresos Netos</div>
                   <div className="rep-kpi-value">${ingresosNetos.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
                   <div className="rep-kpi-sub">
-                    {totalTickets} ventas · bruto ${totalVendido.toLocaleString('es-MX',{minimumFractionDigits:2})}
+                    {totalTickets} movimientos · bruto ${totalVendido.toLocaleString('es-MX',{minimumFractionDigits:2})}
                     {totalGastosExtra > 0 && <span style={{display:'block', color:'#f87171', marginTop:2}}>− gastos ${totalGastosExtra.toFixed(2)}</span>}
                   </div>
                 </div>
@@ -1754,7 +1647,7 @@ const Inventario = () => {
                   <div className="rep-kpi-icon">📦</div>
                   <div className="rep-kpi-label">Costo de Mercancía</div>
                   <div className="rep-kpi-value">${totalGastos.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
-                  <div className="rep-kpi-sub">Lo que costó lo vendido</div>
+                  <div className="rep-kpi-sub">Incluye créditos liquidados</div>
                 </div>
                 <div className="rep-kpi-card" style={{background:'rgba(248,113,113,.06)', border:'1px solid rgba(248,113,113,.18)'}}>
                   <div className="rep-kpi-icon">🧾</div>
@@ -1788,7 +1681,7 @@ const Inventario = () => {
               )}
               <div className="charts-grid">
                 <div className="chart-card">
-                  <div className="chart-title">📅 Ventas por Día<span className="chart-sub">{MESES[mesActual]} {añoActual}</span></div>
+                  <div className="chart-title">📅 Ventas + Abonos por Día<span className="chart-sub">{MESES[mesActual]} {añoActual}</span></div>
                   <AreaChartSVG data={ventasPorDia} />
                 </div>
                 <div className="chart-card">
@@ -1796,26 +1689,78 @@ const Inventario = () => {
                   <BarChartSVG data={comparacionMensual} />
                 </div>
               </div>
-              <div className="section-title" style={{marginBottom:12}}>🧾 Detalle de Ventas</div>
+              <div className="section-title" style={{marginBottom:12}}>🧾 Detalle de Ventas y Abonos</div>
               <div className="tbl-wrap">
                 <table className="tbl">
                   <thead>
-                    <tr><th>Hora</th><th>Producto</th><th>Cant.</th><th>Vendedor</th><th>Costo</th><th>Venta Total</th><th>Ganancia</th><th>Acciones</th></tr>
+                    <tr><th>Hora</th><th>Producto / Crédito</th><th>Cant.</th><th>Vendedor / Cobrador</th><th>Costo</th><th>Ingreso</th><th>Ganancia</th><th>Acciones</th></tr>
                   </thead>
                   <tbody>
                     {ventasFiltradas.length > 0 ? ventasFiltradas.map((v, i) => {
-                      const costo  = (v.precioCompra ?? 0) * (v.cantidad ?? 0);
+                      const esAbono = v.tipo === 'abono';
+                      // Costo: para abonos solo se muestra cuando el crédito está completo (precioCompra ya calculado)
+                      const costo = esAbono
+                        ? (v.precioCompra ?? 0)
+                        : (v.precioCompra ?? 0) * (v.cantidad ?? 0);
                       const margen = (v.total ?? 0) - costo;
                       return (
-                        <tr key={i}>
+                        <tr key={i} style={esAbono ? { borderLeft: '3px solid rgba(52,211,153,.5)', background: 'rgba(52,211,153,.025)' } : {}}>
                           <td className="mono" style={{color:'#6b7280'}}>{formatHora(v.fechaVenta)}</td>
-                          <td style={{fontWeight:500}}>{v.nombreProducto}</td>
-                          <td><span style={{background:'#1e2230',padding:'3px 10px',borderRadius:20,fontSize:12,fontFamily:'JetBrains Mono, monospace'}}>{v.cantidad}</span></td>
-                          <td><span style={{color:'#4f9eff',fontWeight:600,fontSize:13}}>{v.vendedorMatricula}</span></td>
-                          <td className="mono" style={{color:'#f87171'}}>${costo.toFixed(2)}</td>
-                          <td className="mono" style={{fontWeight:700}}>${(v.total??0).toFixed(2)}</td>
-                          <td><span className={`profit-pill ${margen>=0?'pos':'neg'}`}>{margen>=0?'+':''}${margen.toFixed(2)}</span></td>
-                          <td><button className="btn red" style={{padding:'5px 12px',fontSize:12,background:'#ef4444',color:'#fff'}} onClick={() => setModalConfirmarEliminar(v)}>🗑️ Eliminar</button></td>
+                          <td style={{fontWeight:500, maxWidth: 240}}>
+                            {esAbono ? (
+                              <div style={{display:'flex', flexDirection:'column', gap:3}}>
+                                <div style={{display:'flex', alignItems:'center', gap:6, flexWrap:'wrap'}}>
+                                  {/* Badge ABONO o CRÉDITO COMPLETO */}
+                                  <span style={{
+                                    fontSize:10, fontWeight:700, fontFamily:'JetBrains Mono',
+                                    padding:'2px 8px', borderRadius:10, whiteSpace:'nowrap',
+                                    background: v.esCreditoCompleto ? 'rgba(34,197,94,.2)' : 'rgba(52,211,153,.15)',
+                                    color: v.esCreditoCompleto ? '#22c55e' : '#34d399',
+                                    border: `1px solid ${v.esCreditoCompleto ? 'rgba(34,197,94,.4)' : 'rgba(52,211,153,.35)'}`,
+                                  }}>
+                                    {v.esCreditoCompleto ? '✅ LIQUIDADO' : '💳 ABONO'}
+                                  </span>
+                                  <span style={{color:'#e8eaf0', fontWeight:600}}>{v.clienteNombre}</span>
+                                </div>
+                                {/* Descripción del crédito */}
+                                {v.nombreProducto && v.clienteNombre && v.nombreProducto !== v.clienteNombre && (
+                                  <span style={{fontSize:11, color:'#6b7280', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                                    📦 {v.nombreProducto.split('·')[1]?.trim() || ''}
+                                  </span>
+                                )}
+                                {v.abonoNota && (
+                                  <span style={{fontSize:11, color:'#4b5563'}}>📝 {v.abonoNota}</span>
+                                )}
+                              </div>
+                            ) : v.nombreProducto}
+                          </td>
+                          <td>
+                            {esAbono
+                              ? <span style={{fontSize:11, color:'#4b5563', fontFamily:'JetBrains Mono'}}>—</span>
+                              : <span style={{background:'#1e2230',padding:'3px 10px',borderRadius:20,fontSize:12,fontFamily:'JetBrains Mono, monospace'}}>{v.cantidad}</span>
+                            }
+                          </td>
+                          <td><span style={{color: esAbono ? '#34d399' : '#4f9eff', fontWeight:600, fontSize:13}}>{v.vendedorMatricula}</span></td>
+                          <td className="mono" style={{color:'#f87171'}}>
+                            {costo > 0
+                              ? `$${costo.toFixed(2)}`
+                              : <span style={{color:'#2a3045', fontSize:11}}>—</span>
+                            }
+                          </td>
+                          <td className="mono" style={{fontWeight:700, color: esAbono ? '#34d399' : undefined}}>
+                            ${(v.total??0).toFixed(2)}
+                          </td>
+                          <td>
+                            {costo > 0 || !esAbono
+                              ? <span className={`profit-pill ${margen>=0?'pos':'neg'}`}>{margen>=0?'+':''}${margen.toFixed(2)}</span>
+                              : <span style={{color:'#374151', fontSize:11, fontFamily:'JetBrains Mono'}}>pendiente</span>
+                            }
+                          </td>
+                          <td>
+                            {!esAbono && (
+                              <button className="btn red" style={{padding:'5px 12px',fontSize:12,background:'#ef4444',color:'#fff'}} onClick={() => setModalConfirmarEliminar(v)}>🗑️ Eliminar</button>
+                            )}
+                          </td>
                         </tr>
                       );
                     }) : (
@@ -2126,4 +2071,4 @@ const Inventario = () => {
   );
 };
 
-export default Inventario;       
+export default Inventario;
