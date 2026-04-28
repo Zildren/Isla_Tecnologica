@@ -15,4 +15,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     long countByEmpresaId(Long empresaId);
 
     Optional<Usuario> findByMatriculaAndEmpresaId(String matricula, Long empresaId);
+
+    boolean existsByMatricula(String matricula); // ← solo agrega esta línea
 }
