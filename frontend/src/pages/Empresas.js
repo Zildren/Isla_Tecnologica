@@ -348,26 +348,29 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
 
         {/* ── SECCIÓN 1: Datos de la empresa ── */}
         <div style={{
-          fontSize: 10, color: '#4b5563', fontFamily: 'JetBrains Mono',
-          letterSpacing: 1, marginBottom: 10,
+         fontSize: 10, color: '#4b5563', fontFamily: 'JetBrains Mono',
+         letterSpacing: 1, marginBottom: 10,
         }}>DATOS DE LA EMPRESA</div>
 
+       <div style={{ maxHeight: '35vh', overflowY: 'auto', paddingRight: 6 }}>
         {[
-          ['Nombre de la empresa *', 'nombre', 'text', 'Ej: Ferretería García'],
-          ['Propietario / Contacto', 'propietario', 'text', 'Ej: Carlos García'],
-          ['Teléfono', 'telefono', 'tel', '449-000-0000'],
-          ['Email', 'email', 'email', 'contacto@empresa.com'],
-        ].map(([label, key, type, ph]) => (
-          <div key={key} style={{ marginBottom: 12 }}>
-            <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 4 }}>
-              {label}
-            </label>
-            <input
-              className="inp" style={{ width: '100%' }} type={type} placeholder={ph}
-              value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-            />
-          </div>
-        ))}
+           ['Nombre de la empresa *', 'nombre', 'text', 'Ej: Ferretería García'],
+           ['Propietario / Contacto', 'propietario', 'text', 'Ej: Carlos García'],
+           ['Teléfono', 'telefono', 'tel', '449-000-0000'],
+           ['Email', 'email', 'email', 'contacto@empresa.com'],
+         ].map(([label, key, type, ph]) => (
+    <div key={key} style={{ marginBottom: 12 }}>
+      <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 4 }}>
+        {label}
+      </label>
+      <input
+        className="inp" style={{ width: '100%' }} type={type} placeholder={ph}
+        value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+      />
+    </div>
+  ))}
+</div>
+       
 
         {/* ── SECCIÓN 2: Usuario administrador ── */}
         <div style={{
@@ -777,48 +780,36 @@ const Empresas = () => {
  const handleToggle = async (empresa) => {
   const nuevo = empresa.activo === false ? true : false;
   try {
-    // 1. Actualizar el estado de la empresa
     await fetch(`/api/empresas/${empresa.id}`, {
-      method: 'PUT',
-      headers: authHeaders(),
+      method: 'PUT', headers: authHeaders(),
       body: JSON.stringify({ ...empresa, activo: nuevo }),
     });
-
-    // 2. Obtener todos los usuarios de esa empresa y bloquear/desbloquear
     const rUsuarios = await fetch('/api/usuarios', { headers: authHeaders() });
     if (rUsuarios.ok) {
       const todosUsuarios = await rUsuarios.json();
-      // Filtrar usuarios que pertenecen a esta empresa
       const usuariosEmpresa = todosUsuarios.filter(
         u => u.empresa?.id === empresa.id || u.empresaId === empresa.id
       );
-
-      // Bloquear o desbloquear cada uno
       await Promise.all(
         usuariosEmpresa.map(u =>
           fetch(`/api/usuarios/${u.id}/bloquear`, {
-            method: 'PUT',
-            headers: authHeaders(),
-            body: JSON.stringify({ bloqueado: !nuevo }), // Si empresa se desactiva → bloqueado: true
+            method: 'PUT', headers: authHeaders(),
+            body: JSON.stringify({ bloqueado: !nuevo }),
           })
         )
       );
     }
   } catch (err) {
-    console.error('Error al cambiar estado de empresa:', err);
     alert('❌ Error al cambiar el estado de la empresa');
     return;
   }
-
-  // 3. Actualizar estado local
   setEmpresas(prev =>
     prev.map(e => e.id === empresa.id ? { ...e, activo: nuevo } : e)
   );
-
   const accion = nuevo ? 'activada y sus usuarios desbloqueados' : 'desactivada y sus usuarios bloqueados';
   alert(`✅ Empresa "${empresa.nombre}" ${accion}`);
 };
-
+ 
   const handleEliminar = async () => {
     try {
       await fetch(`/api/empresas/${modalEliminar.id}`, {
