@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// ══════════════════════════════════════════════════════
-// PLANES DISPONIBLES
-// ══════════════════════════════════════════════════════
 const PLANES = {
   FREE: {
     id: 'FREE',
@@ -13,16 +10,16 @@ const PLANES = {
     colorBg: 'rgba(52,211,153,.12)',
     colorBorder: 'rgba(52,211,153,.25)',
     emoji: '🎁',
-    duracionDias: 30,          // prueba de 30 días
-    requiereTarjeta: false,    // acceso directo
+    duracionDias: 30,
+    requiereTarjeta: false,
     limites: {
       productos: 100,
       usuarios: 3,
       ventas_mes: 500,
       gastos: true,
-      reportes: true,          // reportes básicos incluidos
-      catalogo: true,          // catálogo público incluido
-      abonos: false,           // sin abonos/créditos
+      reportes: true,
+      catalogo: true,
+      abonos: false,
     },
     descripcion: '30 días gratis · Sin tarjeta · Acceso directo',
   },
@@ -71,7 +68,7 @@ const PLANES = {
     colorBorder: 'rgba(251,191,36,.25)',
     emoji: '👑',
     limites: {
-      productos: -1,       // ilimitado
+      productos: -1,
       usuarios: -1,
       ventas_mes: -1,
       gastos: true,
@@ -82,9 +79,6 @@ const PLANES = {
   },
 };
 
-// ══════════════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════════════
 const authHeaders = () => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -110,23 +104,13 @@ const formatFecha = (f) => {
 const limiteLabel = (val) =>
   val === -1 ? '∞ Ilimitado' : val === false ? '✕' : val === true ? '✓' : String(val);
 
-// ══════════════════════════════════════════════════════
-// BADGE DE ESTADO
-// ══════════════════════════════════════════════════════
 const StatusBadge = ({ empresa }) => {
   const dias = diasRestantes(empresa.fechaVencimiento);
   const activo = empresa.activo !== false;
-
-  if (!activo)
-    return (
-      <span style={badge('#ef4444')}>🔴 Inactiva</span>
-    );
-  if (dias === null)
-    return <span style={badge('#6b7280')}>⚪ Sin plan</span>;
-  if (dias < 0)
-    return <span style={badge('#ef4444')}>🔴 Vencida</span>;
-  if (dias <= 5)
-    return <span style={badge('#fbbf24')}>⚠️ Vence en {dias}d</span>;
+  if (!activo) return <span style={badge('#ef4444')}>🔴 Inactiva</span>;
+  if (dias === null) return <span style={badge('#6b7280')}>⚪ Sin plan</span>;
+  if (dias < 0) return <span style={badge('#ef4444')}>🔴 Vencida</span>;
+  if (dias <= 5) return <span style={badge('#fbbf24')}>⚠️ Vence en {dias}d</span>;
   return <span style={badge('#22c55e')}>✅ Activa</span>;
 };
 
@@ -136,9 +120,6 @@ const badge = (color) => ({
   background: `${color}18`, color, border: `1px solid ${color}35`,
 });
 
-// ══════════════════════════════════════════════════════
-// MODAL PLAN
-// ══════════════════════════════════════════════════════
 const ModalPlan = ({ empresa, onClose, onGuardar }) => {
   const [planSel, setPlanSel] = useState(empresa.plan || 'FREE');
   const [meses, setMeses] = useState(1);
@@ -147,11 +128,8 @@ const ModalPlan = ({ empresa, onClose, onGuardar }) => {
 
   const calcFechaVenc = () => {
     const hoy = new Date();
-    if (esFree) {
-      hoy.setDate(hoy.getDate() + 30); // 30 días fijos para Free Trial
-    } else {
-      hoy.setMonth(hoy.getMonth() + meses);
-    }
+    if (esFree) hoy.setDate(hoy.getDate() + 30);
+    else hoy.setMonth(hoy.getMonth() + meses);
     return hoy.toISOString().split('T')[0];
   };
 
@@ -159,20 +137,14 @@ const ModalPlan = ({ empresa, onClose, onGuardar }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" style={{ maxWidth: 560 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-title">📦 Asignar Plan — {empresa.nombre}</div>
-
-        {/* Selector de plan */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
           {Object.values(PLANES).map((p) => (
-            <button
-              key={p.id}
-              onClick={() => setPlanSel(p.id)}
-              style={{
-                padding: '14px 16px', borderRadius: 10, cursor: 'pointer', textAlign: 'left',
-                border: `2px solid ${planSel === p.id ? p.color : '#2a3045'}`,
-                background: planSel === p.id ? p.colorBg : 'transparent',
-                transition: 'all .15s', position: 'relative',
-              }}
-            >
+            <button key={p.id} onClick={() => setPlanSel(p.id)} style={{
+              padding: '14px 16px', borderRadius: 10, cursor: 'pointer', textAlign: 'left',
+              border: `2px solid ${planSel === p.id ? p.color : '#2a3045'}`,
+              background: planSel === p.id ? p.colorBg : 'transparent',
+              transition: 'all .15s', position: 'relative',
+            }}>
               {p.id === 'FREE' && (
                 <span style={{
                   position: 'absolute', top: 8, right: 8, fontSize: 9, fontWeight: 700,
@@ -181,17 +153,13 @@ const ModalPlan = ({ empresa, onClose, onGuardar }) => {
                 }}>30 DÍAS</span>
               )}
               <div style={{ fontSize: 18, marginBottom: 4 }}>{p.emoji}</div>
-              <div style={{ fontWeight: 700, color: planSel === p.id ? p.color : '#e8eaf0', fontSize: 14 }}>
-                {p.nombre}
-              </div>
+              <div style={{ fontWeight: 700, color: planSel === p.id ? p.color : '#e8eaf0', fontSize: 14 }}>{p.nombre}</div>
               <div style={{ fontSize: 12, color: '#6b7280', fontFamily: 'JetBrains Mono, monospace', marginTop: 2 }}>
                 {p.id === 'FREE' ? '🎁 Gratis · Sin tarjeta' : `$${p.precio}/mes`}
               </div>
             </button>
           ))}
         </div>
-
-        {/* Badge Free Trial */}
         {esFree && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', marginBottom: 14,
@@ -205,8 +173,6 @@ const ModalPlan = ({ empresa, onClose, onGuardar }) => {
             </div>
           </div>
         )}
-
-        {/* Duración — solo se muestra en planes de pago */}
         {!esFree && (
           <div style={{ marginBottom: 16 }}>
             <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 6 }}>
@@ -214,39 +180,25 @@ const ModalPlan = ({ empresa, onClose, onGuardar }) => {
             </label>
             <div style={{ display: 'flex', gap: 8 }}>
               {[1, 3, 6, 12].map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setMeses(m)}
-                  style={{
-                    flex: 1, padding: '8px', borderRadius: 8, cursor: 'pointer',
-                    border: `1px solid ${meses === m ? plan.color : '#2a3045'}`,
-                    background: meses === m ? plan.colorBg : 'transparent',
-                    color: meses === m ? plan.color : '#6b7280',
-                    fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 700,
-                    transition: 'all .15s',
-                  }}
-                >{m === 12 ? '1 año' : `${m} mes${m > 1 ? 'es' : ''}`}</button>
+                <button key={m} onClick={() => setMeses(m)} style={{
+                  flex: 1, padding: '8px', borderRadius: 8, cursor: 'pointer',
+                  border: `1px solid ${meses === m ? plan.color : '#2a3045'}`,
+                  background: meses === m ? plan.colorBg : 'transparent',
+                  color: meses === m ? plan.color : '#6b7280',
+                  fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 700, transition: 'all .15s',
+                }}>{m === 12 ? '1 año' : `${m} mes${m > 1 ? 'es' : ''}`}</button>
               ))}
             </div>
           </div>
         )}
-
-        {/* Resumen */}
-        <div style={{
-          background: '#0d0f14', border: `1px solid ${plan.colorBorder}`,
-          borderRadius: 10, padding: '14px 16px', marginBottom: 16,
-        }}>
+        <div style={{ background: '#0d0f14', border: `1px solid ${plan.colorBorder}`, borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
             <span style={{ fontSize: 12, color: '#6b7280' }}>Plan seleccionado</span>
-            <span style={{ color: plan.color, fontWeight: 700, fontFamily: 'JetBrains Mono' }}>
-              {plan.emoji} {plan.nombre}
-            </span>
+            <span style={{ color: plan.color, fontWeight: 700, fontFamily: 'JetBrains Mono' }}>{plan.emoji} {plan.nombre}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
             <span style={{ fontSize: 12, color: '#6b7280' }}>{esFree ? 'Prueba hasta' : 'Vence el'}</span>
-            <span style={{ color: '#e8eaf0', fontFamily: 'JetBrains Mono', fontSize: 12 }}>
-              {formatFecha(calcFechaVenc())}
-            </span>
+            <span style={{ color: '#e8eaf0', fontFamily: 'JetBrains Mono', fontSize: 12 }}>{formatFecha(calcFechaVenc())}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12, color: '#6b7280' }}>{esFree ? 'Costo' : 'Total a cobrar'}</span>
@@ -256,18 +208,12 @@ const ModalPlan = ({ empresa, onClose, onGuardar }) => {
                 <span style={{ fontSize: 10, color: '#34d399', background: 'rgba(52,211,153,.15)', border: '1px solid rgba(52,211,153,.3)', borderRadius: 6, padding: '1px 6px', fontFamily: 'JetBrains Mono', fontWeight: 700 }}>SIN TARJETA</span>
               </span>
             ) : (
-              <span style={{ color: '#fbbf24', fontWeight: 700, fontFamily: 'JetBrains Mono', fontSize: 16 }}>
-                ${(plan.precio * meses).toFixed(2)} MXN
-              </span>
+              <span style={{ color: '#fbbf24', fontWeight: 700, fontFamily: 'JetBrains Mono', fontSize: 16 }}>${(plan.precio * meses).toFixed(2)} MXN</span>
             )}
           </div>
         </div>
-
-        {/* Límites del plan */}
         <div style={{ marginBottom: 18 }}>
-          <div style={{ fontSize: 11, color: '#4b5563', fontFamily: 'JetBrains Mono', marginBottom: 8 }}>
-            LÍMITES DEL PLAN
-          </div>
+          <div style={{ fontSize: 11, color: '#4b5563', fontFamily: 'JetBrains Mono', marginBottom: 8 }}>LÍMITES DEL PLAN</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
             {[
               ['Productos', plan.limites.productos],
@@ -291,14 +237,11 @@ const ModalPlan = ({ empresa, onClose, onGuardar }) => {
             ))}
           </div>
         </div>
-
         <div className="modal-actions">
           <button className="btn ghost" onClick={onClose}>Cancelar</button>
-          <button
-            className="btn green"
+          <button className="btn green"
             onClick={() => onGuardar({ plan: planSel, fechaVencimiento: calcFechaVenc(), meses })}
-            style={{ background: plan.colorBg, border: `1px solid ${plan.colorBorder}`, color: plan.color }}
-          >
+            style={{ background: plan.colorBg, border: `1px solid ${plan.colorBorder}`, color: plan.color }}>
             {esFree ? '🎁 Activar prueba gratuita' : '✅ Confirmar Plan'}
           </button>
         </div>
@@ -314,9 +257,7 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
   const [form, setForm] = useState({
     nombre: '', propietario: '', telefono: '', email: '', plan: 'FREE',
   });
-  const [usuario, setUsuario] = useState({
-    username: '', password: '', confirmar: '',
-  });
+  const [usuario, setUsuario] = useState({ username: '', password: '', confirmar: '' });
   const [meses, setMeses] = useState(1);
   const [showPass, setShowPass] = useState(false);
 
@@ -325,11 +266,8 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
 
   const calcFechaVenc = () => {
     const hoy = new Date();
-    if (esFree) {
-      hoy.setDate(hoy.getDate() + 30);
-    } else {
-      hoy.setMonth(hoy.getMonth() + meses);
-    }
+    if (esFree) hoy.setDate(hoy.getDate() + 30);
+    else hoy.setMonth(hoy.getMonth() + meses);
     return hoy.toISOString().split('T')[0];
   };
 
@@ -343,34 +281,30 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" style={{ maxWidth: 520 }} onClick={(e) => e.stopPropagation()}>
+      {/* ✅ maxHeight + overflowY en el modal-box para scroll completo */}
+      <div className="modal-box" style={{ maxWidth: 520, maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-title">🏢 Nueva Empresa</div>
-        <div className="modal-box" style={{ maxWidth: 520, maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
-        {/* ── SECCIÓN 1: Datos de la empresa ── */}
-        <div style={{
-         fontSize: 10, color: '#4b5563', fontFamily: 'JetBrains Mono',
-         letterSpacing: 1, marginBottom: 10,
-        }}>DATOS DE LA EMPRESA</div>
 
-       
+        {/* ── SECCIÓN 1: Datos de la empresa ── */}
+        <div style={{ fontSize: 10, color: '#4b5563', fontFamily: 'JetBrains Mono', letterSpacing: 1, marginBottom: 10 }}>
+          DATOS DE LA EMPRESA
+        </div>
         {[
-           ['Nombre de la empresa *', 'nombre', 'text', 'Ej: Ferretería García'],
-           ['Propietario / Contacto', 'propietario', 'text', 'Ej: Carlos García'],
-           ['Teléfono', 'telefono', 'tel', '449-000-0000'],
-           ['Email', 'email', 'email', 'contacto@empresa.com'],
-         ].map(([label, key, type, ph]) => (
-    <div key={key} style={{ marginBottom: 12 }}>
-      <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 4 }}>
-        {label}
-      </label>
-      <input
-        className="inp" style={{ width: '100%' }} type={type} placeholder={ph}
-        value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-      />
-    </div>
-  ))}
-</div>
-       
+          ['Nombre de la empresa *', 'nombre', 'text', 'Ej: Ferretería García'],
+          ['Propietario / Contacto', 'propietario', 'text', 'Ej: Carlos García'],
+          ['Teléfono', 'telefono', 'tel', '449-000-0000'],
+          ['Email', 'email', 'email', 'contacto@empresa.com'],
+        ].map(([label, key, type, ph]) => (
+          <div key={key} style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 4 }}>
+              {label}
+            </label>
+            <input
+              className="inp" style={{ width: '100%' }} type={type} placeholder={ph}
+              value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+            />
+          </div>
+        ))}
 
         {/* ── SECCIÓN 2: Usuario administrador ── */}
         <div style={{
@@ -381,48 +315,28 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
           <span>👤 USUARIO ADMINISTRADOR</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(167,139,250,.2)' }} />
         </div>
-
-        <div style={{
-          background: 'rgba(167,139,250,.06)', border: '1px solid rgba(167,139,250,.2)',
-          borderRadius: 10, padding: '14px', marginBottom: 14,
-        }}>
+        <div style={{ background: 'rgba(167,139,250,.06)', border: '1px solid rgba(167,139,250,.2)', borderRadius: 10, padding: '14px', marginBottom: 14 }}>
           <div style={{ marginBottom: 12 }}>
-            <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 4 }}>
-              Usuario *
-            </label>
-            <input
-              className="inp" style={{ width: '100%' }} type="text"
-              placeholder="Ej: admin_garcia"
+            <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 4 }}>Usuario *</label>
+            <input className="inp" style={{ width: '100%' }} type="text" placeholder="Ej: admin_garcia"
               value={usuario.username}
-              onChange={(e) => setUsuario({ ...usuario, username: e.target.value.toLowerCase().replace(/\s/g, '') })}
-            />
-            <div style={{ fontSize: 10, color: '#4b5563', marginTop: 4, fontFamily: 'JetBrains Mono' }}>
-              Solo letras, números y guiones bajos
-            </div>
+              onChange={(e) => setUsuario({ ...usuario, username: e.target.value.toLowerCase().replace(/\s/g, '') })} />
+            <div style={{ fontSize: 10, color: '#4b5563', marginTop: 4, fontFamily: 'JetBrains Mono' }}>Solo letras, números y guiones bajos</div>
           </div>
-
           <div style={{ marginBottom: 12 }}>
             <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 4 }}>
               Contraseña * (mínimo 6 caracteres)
             </label>
             <div style={{ position: 'relative' }}>
-              <input
-                className="inp"
-                style={{ width: '100%', paddingRight: 40 }}
-                type={showPass ? 'text' : 'password'}
-                placeholder="••••••••"
+              <input className="inp" style={{ width: '100%', paddingRight: 40 }}
+                type={showPass ? 'text' : 'password'} placeholder="••••••••"
                 value={usuario.password}
-                onChange={(e) => setUsuario({ ...usuario, password: e.target.value })}
-              />
-              <button
-                onClick={() => setShowPass(!showPass)}
-                style={{
-                  position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#6b7280',
-                }}
-              >{showPass ? '🙈' : '👁️'}</button>
+                onChange={(e) => setUsuario({ ...usuario, password: e.target.value })} />
+              <button onClick={() => setShowPass(!showPass)} style={{
+                position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#6b7280',
+              }}>{showPass ? '🙈' : '👁️'}</button>
             </div>
-            {/* Indicador de fortaleza */}
             {usuario.password && (
               <div style={{ marginTop: 6, display: 'flex', gap: 4, alignItems: 'center' }}>
                 {[
@@ -441,63 +355,39 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
               </div>
             )}
           </div>
-
           <div>
-            <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 4 }}>
-              Confirmar contraseña *
-            </label>
-            <input
-              className="inp"
-              style={{
-                width: '100%',
-                borderColor: usuario.confirmar && usuario.confirmar !== usuario.password
-                  ? 'rgba(239,68,68,.5)' : undefined,
-              }}
-              type={showPass ? 'text' : 'password'}
-              placeholder="••••••••"
+            <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 4 }}>Confirmar contraseña *</label>
+            <input className="inp" style={{
+              width: '100%',
+              borderColor: usuario.confirmar && usuario.confirmar !== usuario.password ? 'rgba(239,68,68,.5)' : undefined,
+            }}
+              type={showPass ? 'text' : 'password'} placeholder="••••••••"
               value={usuario.confirmar}
-              onChange={(e) => setUsuario({ ...usuario, confirmar: e.target.value })}
-            />
+              onChange={(e) => setUsuario({ ...usuario, confirmar: e.target.value })} />
             {usuario.confirmar && usuario.confirmar !== usuario.password && (
-              <div style={{ fontSize: 10, color: '#ef4444', marginTop: 4, fontFamily: 'JetBrains Mono' }}>
-                ⚠️ Las contraseñas no coinciden
-              </div>
+              <div style={{ fontSize: 10, color: '#ef4444', marginTop: 4, fontFamily: 'JetBrains Mono' }}>⚠️ Las contraseñas no coinciden</div>
             )}
             {usuario.confirmar && usuario.confirmar === usuario.password && (
-              <div style={{ fontSize: 10, color: '#34d399', marginTop: 4, fontFamily: 'JetBrains Mono' }}>
-                ✓ Contraseñas coinciden
-              </div>
+              <div style={{ fontSize: 10, color: '#34d399', marginTop: 4, fontFamily: 'JetBrains Mono' }}>✓ Contraseñas coinciden</div>
             )}
           </div>
         </div>
 
         {/* ── SECCIÓN 3: Plan ── */}
-        <div style={{
-          fontSize: 10, color: '#4b5563', fontFamily: 'JetBrains Mono',
-          letterSpacing: 1, marginBottom: 10,
-        }}>PLAN INICIAL</div>
-
+        <div style={{ fontSize: 10, color: '#4b5563', fontFamily: 'JetBrains Mono', letterSpacing: 1, marginBottom: 10 }}>PLAN INICIAL</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 12 }}>
           {Object.values(PLANES).map((p) => (
-            <button
-              key={p.id}
-              onClick={() => setForm({ ...form, plan: p.id })}
-              style={{
-                padding: '10px 6px', borderRadius: 8, cursor: 'pointer', textAlign: 'center',
-                border: `2px solid ${form.plan === p.id ? p.color : '#2a3045'}`,
-                background: form.plan === p.id ? p.colorBg : 'transparent',
-                transition: 'all .15s',
-              }}
-            >
+            <button key={p.id} onClick={() => setForm({ ...form, plan: p.id })} style={{
+              padding: '10px 6px', borderRadius: 8, cursor: 'pointer', textAlign: 'center',
+              border: `2px solid ${form.plan === p.id ? p.color : '#2a3045'}`,
+              background: form.plan === p.id ? p.colorBg : 'transparent', transition: 'all .15s',
+            }}>
               <div style={{ fontSize: 16 }}>{p.emoji}</div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: form.plan === p.id ? p.color : '#6b7280', marginTop: 3 }}>
-                {p.nombre}
-              </div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: form.plan === p.id ? p.color : '#6b7280', marginTop: 3 }}>{p.nombre}</div>
             </button>
           ))}
         </div>
 
-        {/* Duración */}
         {esFree ? (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', marginBottom: 14,
@@ -512,9 +402,7 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
           </div>
         ) : (
           <div style={{ marginBottom: 14 }}>
-            <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 6 }}>
-              Duración
-            </label>
+            <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 6 }}>Duración</label>
             <div style={{ display: 'flex', gap: 8 }}>
               {[1, 3, 6, 12].map((m) => (
                 <button key={m} onClick={() => setMeses(m)} style={{
@@ -530,10 +418,7 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
         )}
 
         {/* Resumen */}
-        <div style={{
-          background: '#0d0f14', border: `1px solid ${plan.colorBorder}`,
-          borderRadius: 10, padding: '12px 14px', marginBottom: 16,
-        }}>
+        <div style={{ background: '#0d0f14', border: `1px solid ${plan.colorBorder}`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
             <span style={{ fontSize: 12, color: '#6b7280' }}>Plan</span>
             <span style={{ color: plan.color, fontWeight: 700, fontFamily: 'JetBrains Mono' }}>{plan.emoji} {plan.nombre}</span>
@@ -544,9 +429,7 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
             <span style={{ fontSize: 12, color: '#6b7280' }}>Admin</span>
-            <span style={{ color: '#a78bfa', fontFamily: 'JetBrains Mono', fontSize: 12 }}>
-              👤 {usuario.username || '—'}
-            </span>
+            <span style={{ color: '#a78bfa', fontFamily: 'JetBrains Mono', fontSize: 12 }}>👤 {usuario.username || '—'}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12, color: '#6b7280' }}>Total</span>
@@ -558,11 +441,9 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
 
         <div className="modal-actions">
           <button className="btn ghost" onClick={onClose}>Cancelar</button>
-          <button
-            className="btn green"
+          <button className="btn green"
             style={{ background: plan.colorBg, border: `1px solid ${plan.colorBorder}`, color: plan.color }}
-            onClick={handleCrear}
-          >
+            onClick={handleCrear}>
             🏢 Crear Empresa
           </button>
         </div>
@@ -570,6 +451,7 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
     </div>
   );
 };
+
 // ══════════════════════════════════════════════════════
 // CARD DE EMPRESA
 // ══════════════════════════════════════════════════════
@@ -579,22 +461,17 @@ const EmpresaCard = ({ empresa, onPlan, onToggle, onEliminar, onRenovar, selecci
   const vencida = dias !== null && dias < 0;
 
   return (
-    <div
-      onClick={() => onSeleccionar(empresa.id)}
-      style={{
-        background: seleccionada ? plan.colorBg : '#0d0f14',
-        border: `1.5px solid ${seleccionada ? plan.color : vencida ? 'rgba(239,68,68,.3)' : '#1e2230'}`,
-        borderRadius: 14, padding: '18px 20px', cursor: 'pointer',
-        transition: 'all .2s', position: 'relative', overflow: 'hidden',
-      }}
-    >
-      {/* Acento superior */}
+    <div onClick={() => onSeleccionar(empresa.id)} style={{
+      background: seleccionada ? plan.colorBg : '#0d0f14',
+      border: `1.5px solid ${seleccionada ? plan.color : vencida ? 'rgba(239,68,68,.3)' : '#1e2230'}`,
+      borderRadius: 14, padding: '18px 20px', cursor: 'pointer',
+      transition: 'all .2s', position: 'relative', overflow: 'hidden',
+    }}>
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, height: 3,
         background: `linear-gradient(90deg, ${plan.color}, transparent)`,
         opacity: seleccionada ? 1 : 0.4,
       }} />
-
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -604,28 +481,20 @@ const EmpresaCard = ({ empresa, onPlan, onToggle, onEliminar, onRenovar, selecci
             }}>ID #{empresa.id}</span>
             <StatusBadge empresa={empresa} />
           </div>
-          <div style={{ fontWeight: 700, fontSize: 16, color: '#e8eaf0', marginTop: 6 }}>
-            {empresa.nombre}
-          </div>
-          {empresa.propietario && (
-            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>👤 {empresa.propietario}</div>
-          )}
+          <div style={{ fontWeight: 700, fontSize: 16, color: '#e8eaf0', marginTop: 6 }}>{empresa.nombre}</div>
+          {empresa.propietario && <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>👤 {empresa.propietario}</div>}
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{
             fontSize: 13, fontWeight: 700, color: plan.color,
             background: plan.colorBg, border: `1px solid ${plan.colorBorder}`,
             borderRadius: 8, padding: '5px 12px', display: 'inline-flex', alignItems: 'center', gap: 5,
-          }}>
-            {plan.emoji} {plan.nombre}
-          </div>
+          }}>{plan.emoji} {plan.nombre}</div>
           <div style={{ fontSize: 11, color: '#4b5563', fontFamily: 'JetBrains Mono', marginTop: 5 }}>
             {plan.precio === 0 ? 'Gratis' : `$${plan.precio}/mes`}
           </div>
         </div>
       </div>
-
-      {/* Vencimiento */}
       {empresa.fechaVencimiento && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12,
@@ -635,24 +504,17 @@ const EmpresaCard = ({ empresa, onPlan, onToggle, onEliminar, onRenovar, selecci
         }}>
           <span style={{ fontSize: 13 }}>{vencida ? '🔴' : dias <= 5 ? '⚠️' : '📅'}</span>
           <span style={{ fontSize: 12, color: vencida ? '#ef4444' : dias <= 5 ? '#fbbf24' : '#6b7280', fontFamily: 'JetBrains Mono' }}>
-            {vencida
-              ? `Venció hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`
-              : `Vence: ${formatFecha(empresa.fechaVencimiento)} (${dias}d)`}
+            {vencida ? `Venció hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}` : `Vence: ${formatFecha(empresa.fechaVencimiento)} (${dias}d)`}
           </span>
           {vencida && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onRenovar(empresa); }}
-              style={{
-                marginLeft: 'auto', fontSize: 11, color: '#4f9eff',
-                background: 'rgba(79,158,255,.12)', border: '1px solid rgba(79,158,255,.3)',
-                borderRadius: 12, padding: '2px 10px', cursor: 'pointer', fontWeight: 700,
-              }}
-            >Renovar →</button>
+            <button onClick={(e) => { e.stopPropagation(); onRenovar(empresa); }} style={{
+              marginLeft: 'auto', fontSize: 11, color: '#4f9eff',
+              background: 'rgba(79,158,255,.12)', border: '1px solid rgba(79,158,255,.3)',
+              borderRadius: 12, padding: '2px 10px', cursor: 'pointer', fontWeight: 700,
+            }}>Renovar →</button>
           )}
         </div>
       )}
-
-      {/* Mini límites */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
         {[
           ['📦', plan.limites.productos === -1 ? '∞ prod.' : `${plan.limites.productos} prod.`],
@@ -663,41 +525,26 @@ const EmpresaCard = ({ empresa, onPlan, onToggle, onEliminar, onRenovar, selecci
         ].map(([icon, text], i) => (
           <span key={i} style={{
             fontSize: 10, color: '#4b5563', fontFamily: 'JetBrains Mono',
-            background: '#1e2230', border: '1px solid #2a3045',
-            borderRadius: 6, padding: '2px 8px',
+            background: '#1e2230', border: '1px solid #2a3045', borderRadius: 6, padding: '2px 8px',
           }}>{icon} {text}</span>
         ))}
       </div>
-
-      {/* Contacto */}
       {(empresa.telefono || empresa.email) && (
         <div style={{ fontSize: 11, color: '#4b5563', marginBottom: 12, display: 'flex', gap: 12 }}>
           {empresa.telefono && <span>📞 {empresa.telefono}</span>}
           {empresa.email && <span>✉️ {empresa.email}</span>}
         </div>
       )}
-
-      {/* Acciones */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }} onClick={(e) => e.stopPropagation()}>
-        <button
-          className="btn blue"
-          style={{ padding: '6px 14px', fontSize: 12 }}
-          onClick={() => onPlan(empresa)}
-        >📦 Plan</button>
-        <button
-          onClick={() => onToggle(empresa)}
-          style={{
-            padding: '6px 14px', fontSize: 12, borderRadius: 8, cursor: 'pointer', fontWeight: 600,
-            border: `1px solid ${empresa.activo !== false ? 'rgba(251,191,36,.4)' : 'rgba(34,197,94,.4)'}`,
-            background: empresa.activo !== false ? 'rgba(251,191,36,.1)' : 'rgba(34,197,94,.1)',
-            color: empresa.activo !== false ? '#fbbf24' : '#22c55e',
-          }}
-        >{empresa.activo !== false ? '🔒 Desactivar' : '🔓 Activar'}</button>
-        <button
-          className="btn red"
-          style={{ padding: '6px 14px', fontSize: 12, background: '#ef4444', color: '#fff' }}
-          onClick={() => onEliminar(empresa)}
-        >🗑️</button>
+        <button className="btn blue" style={{ padding: '6px 14px', fontSize: 12 }} onClick={() => onPlan(empresa)}>📦 Plan</button>
+        <button onClick={() => onToggle(empresa)} style={{
+          padding: '6px 14px', fontSize: 12, borderRadius: 8, cursor: 'pointer', fontWeight: 600,
+          border: `1px solid ${empresa.activo !== false ? 'rgba(251,191,36,.4)' : 'rgba(34,197,94,.4)'}`,
+          background: empresa.activo !== false ? 'rgba(251,191,36,.1)' : 'rgba(34,197,94,.1)',
+          color: empresa.activo !== false ? '#fbbf24' : '#22c55e',
+        }}>{empresa.activo !== false ? '🔒 Desactivar' : '🔓 Activar'}</button>
+        <button className="btn red" style={{ padding: '6px 14px', fontSize: 12, background: '#ef4444', color: '#fff' }}
+          onClick={() => onEliminar(empresa)}>🗑️</button>
       </div>
     </div>
   );
@@ -737,15 +584,11 @@ const Empresas = () => {
       if (r.status === 401) { navigate('/'); return; }
       if (!r.ok) throw new Error('Error al obtener empresas');
       const data = await r.json();
-      // Normalizamos: si el backend no trae plan, asumimos FREE
       setEmpresas(Array.isArray(data) ? data.map(e => ({
-        ...e,
-        plan: e.plan || 'FREE',
-        activo: e.activo !== false,
+        ...e, plan: e.plan || 'FREE', activo: e.activo !== false,
       })) : []);
     } catch (err) {
       console.error(err);
-      // Demo: datos de ejemplo si el backend falla
       setEmpresas([
         { id: 1, nombre: 'Isla Tecnológica', propietario: 'riempy', telefono: '449-540-5568', email: 'riempy@isla.mx', plan: 'ENTERPRISE', fechaVencimiento: '2026-12-31', activo: true },
         { id: 2, nombre: 'Ferretería García', propietario: 'Carlos García', telefono: '449-111-2222', email: 'garcia@gmail.com', plan: 'BASIC', fechaVencimiento: '2026-05-10', activo: true },
@@ -758,63 +601,54 @@ const Empresas = () => {
     }
   }, [navigate]);
 
-  // ── Verificación automática de vencimientos ──
   const verificarVencimientos = useCallback(() => {
     setEmpresas(prev => prev.map(e => {
       const dias = diasRestantes(e.fechaVencimiento);
-      if (dias !== null && dias < 0 && e.activo) {
-        // Auto-desactivar si venció
-        // En producción también se haría PUT al backend
-        return { ...e, activo: false };
-      }
+      if (dias !== null && dias < 0 && e.activo) return { ...e, activo: false };
       return e;
     }));
   }, []);
 
   useEffect(() => {
     verificarVencimientos();
-    const interval = setInterval(verificarVencimientos, 60000); // cada minuto
+    const interval = setInterval(verificarVencimientos, 60000);
     return () => clearInterval(interval);
   }, [verificarVencimientos]);
 
- const handleToggle = async (empresa) => {
-  const nuevo = empresa.activo === false ? true : false;
-  try {
-    await fetch(`/api/empresas/${empresa.id}`, {
-      method: 'PUT', headers: authHeaders(),
-      body: JSON.stringify({ ...empresa, activo: nuevo }),
-    });
-    const rUsuarios = await fetch('/api/usuarios', { headers: authHeaders() });
-    if (rUsuarios.ok) {
-      const todosUsuarios = await rUsuarios.json();
-      const usuariosEmpresa = todosUsuarios.filter(
-        u => u.empresa?.id === empresa.id || u.empresaId === empresa.id
-      );
-      await Promise.all(
-        usuariosEmpresa.map(u =>
-          fetch(`/api/usuarios/${u.id}/bloquear`, {
-            method: 'PUT', headers: authHeaders(),
-            body: JSON.stringify({ bloqueado: !nuevo }),
-          })
-        )
-      );
+  const handleToggle = async (empresa) => {
+    const nuevo = empresa.activo === false ? true : false;
+    try {
+      await fetch(`/api/empresas/${empresa.id}`, {
+        method: 'PUT', headers: authHeaders(),
+        body: JSON.stringify({ ...empresa, activo: nuevo }),
+      });
+      const rUsuarios = await fetch('/api/usuarios', { headers: authHeaders() });
+      if (rUsuarios.ok) {
+        const todosUsuarios = await rUsuarios.json();
+        const usuariosEmpresa = todosUsuarios.filter(
+          u => u.empresa?.id === empresa.id || u.empresaId === empresa.id
+        );
+        await Promise.all(
+          usuariosEmpresa.map(u =>
+            fetch(`/api/usuarios/${u.id}/bloquear`, {
+              method: 'PUT', headers: authHeaders(),
+              body: JSON.stringify({ bloqueado: !nuevo }),
+            })
+          )
+        );
+      }
+    } catch (err) {
+      alert('❌ Error al cambiar el estado de la empresa');
+      return;
     }
-  } catch (err) {
-    alert('❌ Error al cambiar el estado de la empresa');
-    return;
-  }
-  setEmpresas(prev =>
-    prev.map(e => e.id === empresa.id ? { ...e, activo: nuevo } : e)
-  );
-  const accion = nuevo ? 'activada y sus usuarios desbloqueados' : 'desactivada y sus usuarios bloqueados';
-  alert(`✅ Empresa "${empresa.nombre}" ${accion}`);
-};
- 
+    setEmpresas(prev => prev.map(e => e.id === empresa.id ? { ...e, activo: nuevo } : e));
+    const accion = nuevo ? 'activada y sus usuarios desbloqueados' : 'desactivada y sus usuarios bloqueados';
+    alert(`✅ Empresa "${empresa.nombre}" ${accion}`);
+  };
+
   const handleEliminar = async () => {
     try {
-      await fetch(`/api/empresas/${modalEliminar.id}`, {
-        method: 'DELETE', headers: authHeaders(),
-      });
+      await fetch(`/api/empresas/${modalEliminar.id}`, { method: 'DELETE', headers: authHeaders() });
     } catch {}
     setEmpresas(prev => prev.filter(e => e.id !== modalEliminar.id));
     setModalEliminar(null);
@@ -824,48 +658,40 @@ const Empresas = () => {
   const handleGuardarPlan = async ({ plan, fechaVencimiento }) => {
     const emp = { ...modalPlan, plan, fechaVencimiento, activo: true };
     try {
-      await fetch(`/api/empresas/${emp.id}`, {
-        method: 'PUT', headers: authHeaders(), body: JSON.stringify(emp),
-      });
+      await fetch(`/api/empresas/${emp.id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(emp) });
     } catch {}
     setEmpresas(prev => prev.map(e => e.id === emp.id ? emp : e));
     setModalPlan(null);
     alert(`✅ Plan ${PLANES[plan].nombre} asignado a "${modalPlan.nombre}" hasta ${formatFecha(fechaVencimiento)}`);
   };
 
-const handleCrearEmpresa = async (form) => {
-  try {
-    const r = await fetch('/api/empresas', {
-      method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({
-        nombre: form.nombre,
-        propietario: form.propietario,
-        telefono: form.telefono,
-        email: form.email,
-        plan: form.plan,
-        activo: true,
-        fechaVencimiento: form.fechaVencimiento,
-        // ✅ Datos del admin
-        adminUser: form.adminUser,
-        adminPass: form.adminPass,
-      }),
-    });
-    if (r.ok) {
-      const nueva = await r.json();
-      setEmpresas(prev => [...prev, { ...nueva, plan: form.plan, activo: true }]);
-    } else {
+  const handleCrearEmpresa = async (form) => {
+    try {
+      const r = await fetch('/api/empresas', {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({
+          nombre: form.nombre, propietario: form.propietario,
+          telefono: form.telefono, email: form.email,
+          plan: form.plan, activo: true,
+          fechaVencimiento: form.fechaVencimiento,
+          adminUser: form.adminUser, adminPass: form.adminPass,
+        }),
+      });
+      if (r.ok) {
+        const nueva = await r.json();
+        setEmpresas(prev => [...prev, { ...nueva, plan: form.plan, activo: true }]);
+      } else {
+        const id = Math.max(...empresas.map(e => e.id), 0) + 1;
+        setEmpresas(prev => [...prev, { id, ...form, activo: true }]);
+      }
+    } catch {
       const id = Math.max(...empresas.map(e => e.id), 0) + 1;
       setEmpresas(prev => [...prev, { id, ...form, activo: true }]);
     }
-  } catch {
-    const id = Math.max(...empresas.map(e => e.id), 0) + 1;
-    setEmpresas(prev => [...prev, { id, ...form, activo: true }]);
-  }
-  setModalNueva(false);
-  alert(`✅ Empresa "${form.nombre}" creada con usuario "${form.adminUser}"`);
-};
+    setModalNueva(false);
+    alert(`✅ Empresa "${form.nombre}" creada con usuario "${form.adminUser}"`);
+  };
 
-  // ── Filtros ──
   const empresasFiltradas = empresas.filter(e => {
     const matchText =
       e.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -882,23 +708,16 @@ const handleCrearEmpresa = async (form) => {
     return matchText && matchPlan && matchEstado;
   });
 
-  // ── Stats ──
-  const statsPlanes = Object.fromEntries(
-    Object.keys(PLANES).map(k => [k, empresas.filter(e => e.plan === k).length])
-  );
+  const statsPlanes = Object.fromEntries(Object.keys(PLANES).map(k => [k, empresas.filter(e => e.plan === k).length]));
   const totalActivas = empresas.filter(e => e.activo !== false && (diasRestantes(e.fechaVencimiento) ?? 1) >= 0).length;
   const totalVencidas = empresas.filter(e => { const d = diasRestantes(e.fechaVencimiento); return d !== null && d < 0; }).length;
   const totalPorVencer = empresas.filter(e => { const d = diasRestantes(e.fechaVencimiento); return d !== null && d >= 0 && d <= 7; }).length;
-  const mrr = empresas
-    .filter(e => e.activo !== false)
-    .reduce((s, e) => s + (PLANES[e.plan]?.precio || 0), 0);
-
+  const mrr = empresas.filter(e => e.activo !== false).reduce((s, e) => s + (PLANES[e.plan]?.precio || 0), 0);
   const empresaSel = empresas.find(e => e.id === seleccionada);
 
   return (
     <>
       <div className="app-shell">
-        {/* ── SIDEBAR mínimo ── */}
         <aside className="sidebar">
           <div className="sb-logo">
             <img src="/logo.png" alt="logo" />
@@ -916,77 +735,54 @@ const handleCrearEmpresa = async (form) => {
           </div>
           <nav className="sb-nav">
             <button className="sb-item" onClick={() => navigate('/inventario')} title="Volver">
-              <span className="sb-icon">◀</span>
-              <span className="sb-label">Inventario</span>
+              <span className="sb-icon">◀</span><span className="sb-label">Inventario</span>
             </button>
             <button className="sb-item active">
-              <span className="sb-icon">🏢</span>
-              <span className="sb-label">Empresas</span>
+              <span className="sb-icon">🏢</span><span className="sb-label">Empresas</span>
             </button>
             <button className="sb-item" onClick={() => navigate('/abonos')}>
-              <span className="sb-icon">💳</span>
-              <span className="sb-label">Abonos</span>
+              <span className="sb-icon">💳</span><span className="sb-label">Abonos</span>
             </button>
           </nav>
         </aside>
 
         <main className="main-content">
           <div className="topbar">
-            <div className="topbar-title">
-              <span>Empresas</span> — Panel de Administración
-            </div>
+            <div className="topbar-title"><span>Empresas</span> — Panel de Administración</div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
               <span style={{
                 fontSize: 11, color: '#a78bfa', fontFamily: 'JetBrains Mono',
                 background: 'rgba(167,139,250,.1)', border: '1px solid rgba(167,139,250,.25)',
                 borderRadius: 16, padding: '4px 12px',
               }}>⭐ riempy · Super Admin</span>
-              <button className="btn ghost" style={{ fontSize: 12, padding: '7px 14px' }} onClick={cargarEmpresas}>
-                🔄 Actualizar
-              </button>
-              <button
-                className="btn green"
-                style={{ fontSize: 12, padding: '8px 16px' }}
-                onClick={() => setModalNueva(true)}
-              >➕ Nueva Empresa</button>
+              <button className="btn ghost" style={{ fontSize: 12, padding: '7px 14px' }} onClick={cargarEmpresas}>🔄 Actualizar</button>
+              <button className="btn green" style={{ fontSize: 12, padding: '8px 16px' }} onClick={() => setModalNueva(true)}>➕ Nueva Empresa</button>
             </div>
           </div>
 
-          {/* ── KPIs ── */}
           <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(6, 1fr)', marginBottom: 20 }}>
-            <div className="stat-card">
-              <div className="stat-label">Total Empresas</div>
-              <div className="stat-val c-blue">{empresas.length}</div>
-            </div>
+            <div className="stat-card"><div className="stat-label">Total Empresas</div><div className="stat-val c-blue">{empresas.length}</div></div>
             <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => setFiltroEstado('ACTIVA')}>
-              <div className="stat-label">Activas</div>
-              <div className="stat-val" style={{ color: '#22c55e' }}>{totalActivas}</div>
+              <div className="stat-label">Activas</div><div className="stat-val" style={{ color: '#22c55e' }}>{totalActivas}</div>
             </div>
             <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => setFiltroEstado('VENCIDA')}>
-              <div className="stat-label">Vencidas</div>
-              <div className="stat-val" style={{ color: '#ef4444' }}>{totalVencidas}</div>
+              <div className="stat-label">Vencidas</div><div className="stat-val" style={{ color: '#ef4444' }}>{totalVencidas}</div>
             </div>
             <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => setFiltroEstado('POR_VENCER')}>
-              <div className="stat-label">Por vencer (7d)</div>
-              <div className="stat-val" style={{ color: '#fbbf24' }}>{totalPorVencer}</div>
+              <div className="stat-label">Por vencer (7d)</div><div className="stat-val" style={{ color: '#fbbf24' }}>{totalPorVencer}</div>
             </div>
             <div className="stat-card">
               <div className="stat-label">MRR Estimado</div>
               <div className="stat-val" style={{ color: '#34d399' }}>${mrr.toLocaleString()}</div>
-              <div style={{ fontSize: 10, color: '#4b5563', fontFamily: 'JetBrains Mono', marginTop: 2 }}>
-                /mes
-              </div>
+              <div style={{ fontSize: 10, color: '#4b5563', fontFamily: 'JetBrains Mono', marginTop: 2 }}>/mes</div>
             </div>
             <div className="stat-card">
               <div className="stat-label">ARR Estimado</div>
               <div className="stat-val" style={{ color: '#a78bfa' }}>${(mrr * 12).toLocaleString()}</div>
-              <div style={{ fontSize: 10, color: '#4b5563', fontFamily: 'JetBrains Mono', marginTop: 2 }}>
-                /año
-              </div>
+              <div style={{ fontSize: 10, color: '#4b5563', fontFamily: 'JetBrains Mono', marginTop: 2 }}>/año</div>
             </div>
           </div>
 
-          {/* ── Distribución de planes ── */}
           <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
             {Object.values(PLANES).map((p) => (
               <div key={p.id} style={{
@@ -996,9 +792,7 @@ const handleCrearEmpresa = async (form) => {
                 outline: filtroPlan === p.id ? `2px solid ${p.color}` : 'none',
               }} onClick={() => setFiltroPlan(filtroPlan === p.id ? 'TODOS' : p.id)}>
                 <div style={{ fontSize: 20, marginBottom: 4 }}>{p.emoji}</div>
-                <div style={{ fontWeight: 700, color: p.color, fontSize: 22, fontFamily: 'JetBrains Mono' }}>
-                  {statsPlanes[p.id] || 0}
-                </div>
+                <div style={{ fontWeight: 700, color: p.color, fontSize: 22, fontFamily: 'JetBrains Mono' }}>{statsPlanes[p.id] || 0}</div>
                 <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{p.nombre}</div>
                 <div style={{ fontSize: 11, color: '#4b5563', fontFamily: 'JetBrains Mono' }}>
                   {p.id === 'FREE' ? '🎁 30 días · Sin tarjeta' : p.precio === 0 ? 'Gratis' : `$${p.precio}/mes`}
@@ -1007,7 +801,6 @@ const handleCrearEmpresa = async (form) => {
             ))}
           </div>
 
-          {/* ── Filtros ── */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
             <div className="search-wrap" style={{ marginBottom: 0, flex: 1, maxWidth: 320 }}>
               <span className="search-icon">🔍</span>
@@ -1037,26 +830,18 @@ const handleCrearEmpresa = async (form) => {
             </span>
           </div>
 
-          {/* ── Layout: grid + detalle ── */}
           <div style={{ display: 'grid', gridTemplateColumns: seleccionada ? '1fr 360px' : '1fr', gap: 16 }}>
-
-            {/* Grid de empresas */}
             <div>
               {cargando ? (
-                <div style={{ textAlign: 'center', padding: '60px 0', color: '#4b5563', fontSize: 14 }}>
-                  ⏳ Cargando empresas...
-                </div>
+                <div style={{ textAlign: 'center', padding: '60px 0', color: '#4b5563', fontSize: 14 }}>⏳ Cargando empresas...</div>
               ) : empresasFiltradas.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '60px 0', color: '#374151', fontSize: 14 }}>
-                  <div style={{ fontSize: 36, marginBottom: 12 }}>🏢</div>
-                  Sin resultados
+                  <div style={{ fontSize: 36, marginBottom: 12 }}>🏢</div>Sin resultados
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
                   {empresasFiltradas.map(e => (
-                    <EmpresaCard
-                      key={e.id}
-                      empresa={e}
+                    <EmpresaCard key={e.id} empresa={e}
                       seleccionada={seleccionada === e.id}
                       onSeleccionar={(id) => setSeleccionada(prev => prev === id ? null : id)}
                       onPlan={setModalPlan}
@@ -1069,22 +854,19 @@ const handleCrearEmpresa = async (form) => {
               )}
             </div>
 
-            {/* Panel de detalle */}
             {seleccionada && empresaSel && (() => {
               const plan = PLANES[empresaSel.plan] || PLANES.FREE;
               const dias = diasRestantes(empresaSel.fechaVencimiento);
               return (
                 <div style={{
                   background: '#0d0f14', border: `1.5px solid ${plan.colorBorder}`,
-                  borderRadius: 14, padding: '20px', position: 'sticky', top: 20,
-                  height: 'fit-content',
+                  borderRadius: 14, padding: '20px', position: 'sticky', top: 20, height: 'fit-content',
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#e8eaf0' }}>Detalle Empresa</div>
                     <button onClick={() => setSeleccionada(null)}
                       style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: 16 }}>✕</button>
                   </div>
-
                   <div style={{ textAlign: 'center', marginBottom: 16 }}>
                     <div style={{
                       width: 60, height: 60, borderRadius: '50%', margin: '0 auto 10px',
@@ -1094,7 +876,6 @@ const handleCrearEmpresa = async (form) => {
                     <div style={{ fontWeight: 700, fontSize: 18, color: '#e8eaf0' }}>{empresaSel.nombre}</div>
                     <div style={{ fontSize: 12, color: plan.color, fontWeight: 700, marginTop: 4 }}>Plan {plan.nombre}</div>
                   </div>
-
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                     {[
                       ['🆔 ID', `#${empresaSel.id}`],
@@ -1114,8 +895,6 @@ const handleCrearEmpresa = async (form) => {
                       </div>
                     ))}
                   </div>
-
-                  {/* Límites del plan actual */}
                   <div style={{ fontSize: 11, color: '#4b5563', fontFamily: 'JetBrains Mono', marginBottom: 8 }}>LÍMITES ACTUALES</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 16 }}>
                     {[
@@ -1138,7 +917,6 @@ const handleCrearEmpresa = async (form) => {
                       </div>
                     ))}
                   </div>
-
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <button className="btn blue" style={{ width: '100%', justifyContent: 'center', padding: '10px' }}
                       onClick={() => setModalPlan(empresaSel)}>📦 Cambiar / Renovar Plan</button>
@@ -1159,24 +937,14 @@ const handleCrearEmpresa = async (form) => {
         </main>
       </div>
 
-      {/* ══ MODAL PLAN ══ */}
       {modalPlan && (
-        <ModalPlan
-          empresa={modalPlan}
-          onClose={() => setModalPlan(null)}
-          onGuardar={handleGuardarPlan}
-        />
+        <ModalPlan empresa={modalPlan} onClose={() => setModalPlan(null)} onGuardar={handleGuardarPlan} />
       )}
 
-      {/* ══ MODAL NUEVA EMPRESA ══ */}
       {modalNueva && (
-        <ModalNuevaEmpresa
-          onClose={() => setModalNueva(false)}
-          onGuardar={handleCrearEmpresa}
-        />
+        <ModalNuevaEmpresa onClose={() => setModalNueva(false)} onGuardar={handleCrearEmpresa} />
       )}
 
-      {/* ══ MODAL ELIMINAR ══ */}
       {modalEliminar && (
         <div className="modal-overlay" onClick={() => setModalEliminar(null)}>
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
@@ -1184,10 +952,7 @@ const handleCrearEmpresa = async (form) => {
             <p style={{ fontSize: 13, color: '#9ca3af', marginBottom: 16, lineHeight: 1.6 }}>
               ¿Confirmas que deseas eliminar la empresa <strong style={{ color: '#e8eaf0' }}>"{modalEliminar.nombre}"</strong>? Esta acción no se puede deshacer y eliminará todos sus datos.
             </p>
-            <div style={{
-              background: '#0d0f14', border: '1px solid rgba(239,68,68,.2)',
-              borderRadius: 10, padding: '14px 16px', marginBottom: 18,
-            }}>
+            <div style={{ background: '#0d0f14', border: '1px solid rgba(239,68,68,.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 18 }}>
               <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6, color: '#ef4444' }}>⚠️ Esta acción es permanente</div>
               <div style={{ fontSize: 12, color: '#9ca3af' }}>
                 ID: #{modalEliminar.id} · Plan: {PLANES[modalEliminar.plan]?.nombre || 'FREE'} · Propietario: {modalEliminar.propietario || '—'}
