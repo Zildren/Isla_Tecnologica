@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.CrearEmpresaRequest;
 import com.example.demo.model.Empresa;
 import com.example.demo.service.EmpresaService;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +23,14 @@ public class EmpresaController {
     }
 
     @PostMapping
-    public ResponseEntity<Empresa> create(@RequestBody Empresa body) {
-        return ResponseEntity.ok(service.save(body));
+    public ResponseEntity<?> create(@RequestBody CrearEmpresaRequest req) {
+        try {
+            Empresa nueva = service.crearConAdmin(req);
+            return ResponseEntity.ok(nueva);
+        } catch (RuntimeException e) {
+            // Si el usuario ya existe, regresa error claro al frontend
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
