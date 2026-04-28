@@ -25,12 +25,11 @@ public class VentaController {
     private ProductoRepository productoRepository;
 
     @Autowired
-    private UsuarioRepository usuarioRepository; // 🔑 NUEVO
+    private UsuarioRepository usuarioRepository;
 
     @GetMapping
     public List<Venta> obtenerTodasLasVentas(@AuthenticationPrincipal UserDetails userDetails) {
         try {
-            // 🔑 NUEVO — solo devuelve ventas de la empresa del usuario logueado
             Usuario usuario = usuarioRepository.findByMatricula(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
             List<Venta> ventas = ventaRepository.findByEmpresa(usuario.getEmpresa());
@@ -45,36 +44,50 @@ public class VentaController {
     public ResponseEntity<?> registrarVenta(@RequestBody Venta venta,
                                             @AuthenticationPrincipal UserDetails userDetails) {
         try {
-            // 🔑 NUEVO — asigna empresa desde JWT
             Usuario usuario = usuarioRepository.findByMatricula(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
             venta.setEmpresa(usuario.getEmpresa());
 
-            Producto producto = productoRepository.findByCodigo(venta.getCodigoProducto())
-                    .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + venta.getCodigoProducto()));
+            boolean esLibre = "LIBRE".equals(venta.getCodigoProducto());
 
-            if (producto.getStock() < venta.getCantidad()) {
-                return ResponseEntity.badRequest().body("Stock insuficiente. Disponible: " + producto.getStock());
+            if (esLibre) {
+                // Producto libre: no toca inventario
+                if (venta.getPrecioVenta() == null || venta.getPrecioVenta() <= 0) {
+                    return ResponseEntity.badRequest().body("Precio inválido para producto libre");
+                }
+                if (venta.getPrecioCompra() == null) venta.setPrecioCompra(0.0);
+                venta.setTotal(venta.getCantidad() * venta.getPrecioVenta());
+                System.out.println(">>> [VENTA LIBRE] Nombre: " + venta.getNombreProducto()
+                        + " | precioVenta: " + venta.getPrecioVenta()
+                        + " | cantidad: " + venta.getCantidad());
+
+            } else {
+                // Producto de inventario: flujo normal
+                Producto producto = productoRepository.findByCodigo(venta.getCodigoProducto())
+                        .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + venta.getCodigoProducto()));
+
+                if (producto.getStock() < venta.getCantidad()) {
+                    return ResponseEntity.badRequest().body("Stock insuficiente. Disponible: " + producto.getStock());
+                }
+
+                producto.setStock(producto.getStock() - venta.getCantidad());
+                productoRepository.save(producto);
+
+                double costoBase = (producto.getPrecioCompra() != null && producto.getPrecioCompra() > 0)
+                        ? producto.getPrecioCompra() : 0.0;
+                venta.setPrecioCompra(costoBase);
+
+                if (venta.getPrecioVenta() == null || venta.getPrecioVenta() <= 0) {
+                    venta.setPrecioVenta(producto.getPrecioVenta());
+                }
+
+                venta.setTotal(venta.getCantidad() * venta.getPrecioVenta());
+
+                System.out.println(">>> [VENTA] Producto: " + producto.getCodigo()
+                        + " | precioCompra: " + costoBase
+                        + " | precioVenta: " + producto.getPrecioVenta()
+                        + " | cantidad: " + venta.getCantidad());
             }
-
-            producto.setStock(producto.getStock() - venta.getCantidad());
-            productoRepository.save(producto);
-
-            double costoBase = (producto.getPrecioCompra() != null && producto.getPrecioCompra() > 0)
-                    ? producto.getPrecioCompra()
-                    : 0.0;
-            venta.setPrecioCompra(costoBase);
-
-            System.out.println(">>> [VENTA] Producto: " + producto.getCodigo()
-                    + " | precioCompra: " + costoBase
-                    + " | precioVenta: " + producto.getPrecioVenta()
-                    + " | cantidad: " + venta.getCantidad());
-
-            if (venta.getPrecioVenta() == null || venta.getPrecioVenta() <= 0) {
-                venta.setPrecioVenta(producto.getPrecioVenta());
-            }
-
-            venta.setTotal(venta.getCantidad() * venta.getPrecioVenta());
 
             Venta nuevaVenta = ventaRepository.save(venta);
             return ResponseEntity.ok(nuevaVenta);
@@ -89,7 +102,6 @@ public class VentaController {
     public ResponseEntity<?> eliminarVenta(@PathVariable Long id,
                                            @AuthenticationPrincipal UserDetails userDetails) {
         try {
-            // 🔑 NUEVO — verifica que la venta pertenece a la empresa del usuario
             Usuario usuario = usuarioRepository.findByMatricula(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
