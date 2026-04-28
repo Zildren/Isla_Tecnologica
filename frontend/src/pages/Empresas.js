@@ -345,14 +345,14 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" style={{ maxWidth: 520 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-title">🏢 Nueva Empresa</div>
-
+        <div className="modal-box" style={{ maxWidth: 520, maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
         {/* ── SECCIÓN 1: Datos de la empresa ── */}
         <div style={{
          fontSize: 10, color: '#4b5563', fontFamily: 'JetBrains Mono',
          letterSpacing: 1, marginBottom: 10,
         }}>DATOS DE LA EMPRESA</div>
 
-       <div style={{ maxHeight: '35vh', overflowY: 'auto', paddingRight: 6 }}>
+       
         {[
            ['Nombre de la empresa *', 'nombre', 'text', 'Ej: Ferretería García'],
            ['Propietario / Contacto', 'propietario', 'text', 'Ej: Carlos García'],
