@@ -10,12 +10,28 @@ export const loginUsuario = async (matricula, password) => {
 
         const data = await response.json();
 
-        if (!response.ok) {
-            console.error("Error del servidor:", data);
-            return { status: "ERROR_SERVIDOR", mensaje: data.mensaje };
+        // ✅ Manejo de errores por código HTTP
+        if (response.status === 403) {
+            // Empresa inactiva, vencida o usuario bloqueado
+            return { 
+                status: "ACCESO_DENEGADO", 
+                mensaje: data.error || "Acceso denegado. Contacta al administrador." 
+            };
         }
 
-        console.log("LOGIN OK:", data);
+        if (response.status === 401) {
+            return { 
+                status: "CREDENCIALES_INVALIDAS", 
+                mensaje: "Usuario o contraseña incorrectos." 
+            };
+        }
+
+        if (!response.ok) {
+            return { 
+                status: "ERROR_SERVIDOR", 
+                mensaje: data.error || data.mensaje || "Error en el servidor." 
+            };
+        }
 
         if (data.token) {
             localStorage.setItem('token', data.token);
@@ -28,7 +44,7 @@ export const loginUsuario = async (matricula, password) => {
 
     } catch (error) {
         console.error("Error de conexion:", error);
-        return { status: "ERROR_CONEXION" };
+        return { status: "ERROR_CONEXION", mensaje: "Sin conexión al servidor." };
     }
 };
 

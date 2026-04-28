@@ -10,6 +10,7 @@ const Login = () => {
     const [verPassword, setVerPassword] = useState(false);
     const [focusedField, setFocusedField] = useState(null);
     const [mounted, setMounted] = useState(false);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         setMounted(true);
@@ -21,31 +22,46 @@ const Login = () => {
         const passwordLimpia = form.password.trim();
 
         if (!matriculaLimpia || !passwordLimpia) {
-            alert("Por favor, llena ambos campos");
+            setError("Por favor, llena ambos campos");
             return;
         }
 
         setCargando(true);
+        setError('');
 
         try {
             const resultado = await loginUsuario(matriculaLimpia, passwordLimpia);
             const status = resultado.status?.trim().toUpperCase();
 
             if (status === "BIENVENIDO_ADMIN" || status === "BIENVENIDO_VENDEDOR") {
-                // 🔑 Guardar token y empresaId
                 localStorage.setItem('token', resultado.token);
                 localStorage.setItem('empresaId', resultado.empresaId);
                 localStorage.setItem('usuarioLogueado', matriculaLimpia.toLowerCase());
                 localStorage.setItem('rolUsuario', status === "BIENVENIDO_ADMIN" ? 'ADMIN' : 'VENDEDOR');
                 navigate("/inventario");
+
+            } else if (status === "ACCESO_DENEGADO") {
+                setError(resultado.mensaje || "Acceso denegado. Contacta al administrador.");
+
+            } else if (status === "CREDENCIALES_INVALIDAS") {
+                setError("Matrícula o contraseña incorrecta.");
+
             } else {
-                alert("Matrícula o contraseña incorrecta.");
+                setError(resultado.mensaje || "Matrícula o contraseña incorrecta.");
             }
-        } catch (error) {
-            alert("Error de conexión con el servidor");
+
+        } catch (err) {
+            setError("Error de conexión con el servidor");
         } finally {
             setCargando(false);
         }
+    };
+
+    const getErrorIconAndColor = () => {
+        if (error.includes('vencido') || error.includes('vencida')) return { icon: '⏰', color: '#fbbf24', bg: 'rgba(251,191,36,.1)', border: 'rgba(251,191,36,.35)' };
+        if (error.includes('inactiva') || error.includes('inactivo') || error.includes('bloqueado')) return { icon: '🔒', color: '#fbbf24', bg: 'rgba(251,191,36,.1)', border: 'rgba(251,191,36,.35)' };
+        if (error.includes('conexión') || error.includes('servidor')) return { icon: '🌐', color: '#a78bfa', bg: 'rgba(167,139,250,.1)', border: 'rgba(167,139,250,.35)' };
+        return { icon: '⚠️', color: '#ef4444', bg: 'rgba(239,68,68,.1)', border: 'rgba(239,68,68,.35)' };
     };
 
     return (
@@ -91,7 +107,7 @@ const Login = () => {
                                 value={form.matricula}
                                 onFocus={() => setFocusedField('matricula')}
                                 onBlur={() => setFocusedField(null)}
-                                onChange={(e) => setForm({ ...form, matricula: e.target.value })}
+                                onChange={(e) => { setForm({ ...form, matricula: e.target.value }); setError(''); }}
                                 autoComplete="username"
                             />
                         </div>
@@ -114,7 +130,7 @@ const Login = () => {
                                 value={form.password}
                                 onFocus={() => setFocusedField('password')}
                                 onBlur={() => setFocusedField(null)}
-                                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                                onChange={(e) => { setForm({ ...form, password: e.target.value }); setError(''); }}
                                 autoComplete="current-password"
                             />
                             <button
@@ -140,6 +156,31 @@ const Login = () => {
                         </div>
                     </div>
 
+                    {/* ── Mensaje de error ── */}
+                    {error && (() => {
+                        const { icon, color, bg, border } = getErrorIconAndColor();
+                        return (
+                            <div style={{
+                                marginBottom: 16,
+                                padding: '12px 16px',
+                                borderRadius: 10,
+                                background: bg,
+                                border: `1px solid ${border}`,
+                                color,
+                                fontSize: 13,
+                                fontFamily: 'JetBrains Mono, monospace',
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: 10,
+                                lineHeight: 1.5,
+                                animation: 'fadeIn .2s ease',
+                            }}>
+                                <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{icon}</span>
+                                <span>{error}</span>
+                            </div>
+                        );
+                    })()}
+
                     <button
                         type="submit"
                         className="submit-btn"
@@ -153,7 +194,7 @@ const Login = () => {
                     </button>
                 </form>
 
-                <p className="login-footer">© 2026 · Isla Tecnológica · v2.0 </p>
+                <p className="login-footer">© 2026 · Isla Tecnológica · v3.0</p>
             </div>
         </div>
     );
