@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,14 +39,11 @@ public class AuthController {
         return usuarioRepository.findByMatricula(matricula)
             .map(u -> {
 
-                // 🔄 Migración automática: si la contraseña NO está encriptada, la comparamos
-                // en texto plano y la encriptamos para la próxima vez
+                // 🔄 Migración automática de contraseña plana a BCrypt
                 boolean passwordCorrecta;
                 if (u.getPassword().startsWith("$2a$") || u.getPassword().startsWith("$2b$")) {
-                    // Ya está encriptada con BCrypt
                     passwordCorrecta = passwordEncoder.matches(password, u.getPassword());
                 } else {
-                    // Todavía en texto plano — comparamos directo y migramos
                     passwordCorrecta = u.getPassword().trim().equals(password);
                     if (passwordCorrecta) {
                         u.setPassword(passwordEncoder.encode(password));
@@ -56,17 +54,39 @@ public class AuthController {
 
                 if (!passwordCorrecta) {
                     Map<String, Object> error = new HashMap<>();
-                    error.put("status", "ERROR_PASSWORD");
+                    error.put("status", "ACCESO_DENEGADO");
+                    error.put("error", "Usuario o contraseña incorrectos.");
                     return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
                 }
 
+                // ✅ Verificar si el usuario está bloqueado
                 if (Boolean.TRUE.equals(u.getBloqueado())) {
                     Map<String, Object> bloqueado = new HashMap<>();
-                    bloqueado.put("status", "BLOQUEADO");
+                    bloqueado.put("status", "ACCESO_DENEGADO");
+                    bloqueado.put("error", "Tu cuenta está bloqueada. Contacta al administrador.");
                     return new ResponseEntity<>(bloqueado, HttpStatus.FORBIDDEN);
                 }
 
-                // ✅ Generar JWT
+                // ✅ Verificar si la empresa existe y está activa
+                if (u.getEmpresa() == null || Boolean.FALSE.equals(u.getEmpresa().getActivo())) {
+                    Map<String, Object> inactiva = new HashMap<>();
+                    inactiva.put("status", "ACCESO_DENEGADO");
+                    inactiva.put("error", "La empresa está inactiva. Contacta al administrador.");
+                    return new ResponseEntity<>(inactiva, HttpStatus.FORBIDDEN);
+                }
+
+                // ✅ Verificar vencimiento del plan
+                if (u.getEmpresa().getFechaVencimiento() != null) {
+                    LocalDate hoy = LocalDate.now();
+                    if (hoy.isAfter(u.getEmpresa().getFechaVencimiento())) {
+                        Map<String, Object> vencida = new HashMap<>();
+                        vencida.put("status", "ACCESO_DENEGADO");
+                        vencida.put("error", "El plan de la empresa venció. Contacta al administrador.");
+                        return new ResponseEntity<>(vencida, HttpStatus.FORBIDDEN);
+                    }
+                }
+
+                // ✅ Generar JWT y responder
                 String token = jwtService.generarToken(u);
 
                 String statusRol = "ADMIN".equalsIgnoreCase(u.getRol())
@@ -80,12 +100,14 @@ public class AuthController {
                 ok.put("matricula", u.getMatricula());
                 ok.put("empresaId", u.getEmpresa().getId());
 
+                System.out.println("✅ Login exitoso: " + matricula + " | Rol: " + u.getRol());
                 return new ResponseEntity<>(ok, HttpStatus.OK);
             })
             .orElseGet(() -> {
                 Map<String, Object> noEncontrado = new HashMap<>();
-                noEncontrado.put("status", "USUARIO_NO_ENCONTRADO");
-                return new ResponseEntity<>(noEncontrado, HttpStatus.NOT_FOUND);
+                noEncontrado.put("status", "ACCESO_DENEGADO");
+                noEncontrado.put("error", "Usuario o contraseña incorrectos.");
+                return new ResponseEntity<>(noEncontrado, HttpStatus.UNAUTHORIZED);
             });
     }
 }

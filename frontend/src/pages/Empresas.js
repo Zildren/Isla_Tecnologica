@@ -774,17 +774,50 @@ const Empresas = () => {
     return () => clearInterval(interval);
   }, [verificarVencimientos]);
 
-  const handleToggle = async (empresa) => {
-    const nuevo = empresa.activo === false ? true : false;
-    try {
-      await fetch(`/api/empresas/${empresa.id}`, {
-        method: 'PUT',
-        headers: authHeaders(),
-        body: JSON.stringify({ ...empresa, activo: nuevo }),
-      });
-    } catch {}
-    setEmpresas(prev => prev.map(e => e.id === empresa.id ? { ...e, activo: nuevo } : e));
-  };
+ const handleToggle = async (empresa) => {
+  const nuevo = empresa.activo === false ? true : false;
+  try {
+    // 1. Actualizar el estado de la empresa
+    await fetch(`/api/empresas/${empresa.id}`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify({ ...empresa, activo: nuevo }),
+    });
+
+    // 2. Obtener todos los usuarios de esa empresa y bloquear/desbloquear
+    const rUsuarios = await fetch('/api/usuarios', { headers: authHeaders() });
+    if (rUsuarios.ok) {
+      const todosUsuarios = await rUsuarios.json();
+      // Filtrar usuarios que pertenecen a esta empresa
+      const usuariosEmpresa = todosUsuarios.filter(
+        u => u.empresa?.id === empresa.id || u.empresaId === empresa.id
+      );
+
+      // Bloquear o desbloquear cada uno
+      await Promise.all(
+        usuariosEmpresa.map(u =>
+          fetch(`/api/usuarios/${u.id}/bloquear`, {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify({ bloqueado: !nuevo }), // Si empresa se desactiva → bloqueado: true
+          })
+        )
+      );
+    }
+  } catch (err) {
+    console.error('Error al cambiar estado de empresa:', err);
+    alert('❌ Error al cambiar el estado de la empresa');
+    return;
+  }
+
+  // 3. Actualizar estado local
+  setEmpresas(prev =>
+    prev.map(e => e.id === empresa.id ? { ...e, activo: nuevo } : e)
+  );
+
+  const accion = nuevo ? 'activada y sus usuarios desbloqueados' : 'desactivada y sus usuarios bloqueados';
+  alert(`✅ Empresa "${empresa.nombre}" ${accion}`);
+};
 
   const handleEliminar = async () => {
     try {
