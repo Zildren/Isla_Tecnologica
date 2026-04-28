@@ -314,22 +314,52 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
   const [form, setForm] = useState({
     nombre: '', propietario: '', telefono: '', email: '', plan: 'FREE',
   });
+  const [usuario, setUsuario] = useState({
+    username: '', password: '', confirmar: '',
+  });
+  const [meses, setMeses] = useState(1);
+  const [showPass, setShowPass] = useState(false);
 
   const plan = PLANES[form.plan];
+  const esFree = form.plan === 'FREE';
+
+  const calcFechaVenc = () => {
+    const hoy = new Date();
+    if (esFree) {
+      hoy.setDate(hoy.getDate() + 30);
+    } else {
+      hoy.setMonth(hoy.getMonth() + meses);
+    }
+    return hoy.toISOString().split('T')[0];
+  };
+
+  const handleCrear = () => {
+    if (!form.nombre.trim()) return alert('El nombre de la empresa es requerido');
+    if (!usuario.username.trim()) return alert('El usuario es requerido');
+    if (usuario.password.length < 6) return alert('La contraseña debe tener al menos 6 caracteres');
+    if (usuario.password !== usuario.confirmar) return alert('Las contraseñas no coinciden');
+    onGuardar({ ...form, fechaVencimiento: calcFechaVenc(), adminUser: usuario.username, adminPass: usuario.password });
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" style={{ maxWidth: 500 }} onClick={(e) => e.stopPropagation()}>
+      <div className="modal-box" style={{ maxWidth: 520 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-title">🏢 Nueva Empresa</div>
 
+        {/* ── SECCIÓN 1: Datos de la empresa ── */}
+        <div style={{
+          fontSize: 10, color: '#4b5563', fontFamily: 'JetBrains Mono',
+          letterSpacing: 1, marginBottom: 10,
+        }}>DATOS DE LA EMPRESA</div>
+
         {[
-          ['Nombre de la empresa', 'nombre', 'text', 'Ej: Ferretería García'],
+          ['Nombre de la empresa *', 'nombre', 'text', 'Ej: Ferretería García'],
           ['Propietario / Contacto', 'propietario', 'text', 'Ej: Carlos García'],
           ['Teléfono', 'telefono', 'tel', '449-000-0000'],
           ['Email', 'email', 'email', 'contacto@empresa.com'],
         ].map(([label, key, type, ph]) => (
-          <div key={key} style={{ marginBottom: 14 }}>
-            <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 5 }}>
+          <div key={key} style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 4 }}>
               {label}
             </label>
             <input
@@ -339,28 +369,187 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
           </div>
         ))}
 
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 5 }}>
-            Plan inicial
-          </label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
-            {Object.values(PLANES).map((p) => (
+        {/* ── SECCIÓN 2: Usuario administrador ── */}
+        <div style={{
+          fontSize: 10, color: '#a78bfa', fontFamily: 'JetBrains Mono',
+          letterSpacing: 1, marginTop: 18, marginBottom: 10,
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span>👤 USUARIO ADMINISTRADOR</span>
+          <div style={{ flex: 1, height: 1, background: 'rgba(167,139,250,.2)' }} />
+        </div>
+
+        <div style={{
+          background: 'rgba(167,139,250,.06)', border: '1px solid rgba(167,139,250,.2)',
+          borderRadius: 10, padding: '14px', marginBottom: 14,
+        }}>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 4 }}>
+              Usuario *
+            </label>
+            <input
+              className="inp" style={{ width: '100%' }} type="text"
+              placeholder="Ej: admin_garcia"
+              value={usuario.username}
+              onChange={(e) => setUsuario({ ...usuario, username: e.target.value.toLowerCase().replace(/\s/g, '') })}
+            />
+            <div style={{ fontSize: 10, color: '#4b5563', marginTop: 4, fontFamily: 'JetBrains Mono' }}>
+              Solo letras, números y guiones bajos
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 4 }}>
+              Contraseña * (mínimo 6 caracteres)
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                className="inp"
+                style={{ width: '100%', paddingRight: 40 }}
+                type={showPass ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={usuario.password}
+                onChange={(e) => setUsuario({ ...usuario, password: e.target.value })}
+              />
               <button
-                key={p.id}
-                onClick={() => setForm({ ...form, plan: p.id })}
+                onClick={() => setShowPass(!showPass)}
                 style={{
-                  padding: '10px 6px', borderRadius: 8, cursor: 'pointer', textAlign: 'center',
-                  border: `2px solid ${form.plan === p.id ? p.color : '#2a3045'}`,
-                  background: form.plan === p.id ? p.colorBg : 'transparent',
-                  transition: 'all .15s',
+                  position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#6b7280',
                 }}
-              >
-                <div style={{ fontSize: 16 }}>{p.emoji}</div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: form.plan === p.id ? p.color : '#6b7280', marginTop: 3 }}>
-                  {p.nombre}
-                </div>
-              </button>
-            ))}
+              >{showPass ? '🙈' : '👁️'}</button>
+            </div>
+            {/* Indicador de fortaleza */}
+            {usuario.password && (
+              <div style={{ marginTop: 6, display: 'flex', gap: 4, alignItems: 'center' }}>
+                {[
+                  { ok: usuario.password.length >= 6, label: '6+ chars' },
+                  { ok: /[A-Z]/.test(usuario.password), label: 'Mayúscula' },
+                  { ok: /[0-9]/.test(usuario.password), label: 'Número' },
+                  { ok: /[^A-Za-z0-9]/.test(usuario.password), label: 'Símbolo' },
+                ].map(({ ok, label }) => (
+                  <span key={label} style={{
+                    fontSize: 9, padding: '2px 6px', borderRadius: 4, fontFamily: 'JetBrains Mono',
+                    background: ok ? 'rgba(52,211,153,.15)' : '#1e2230',
+                    color: ok ? '#34d399' : '#4b5563',
+                    border: `1px solid ${ok ? 'rgba(52,211,153,.3)' : '#2a3045'}`,
+                  }}>{ok ? '✓' : '·'} {label}</span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 4 }}>
+              Confirmar contraseña *
+            </label>
+            <input
+              className="inp"
+              style={{
+                width: '100%',
+                borderColor: usuario.confirmar && usuario.confirmar !== usuario.password
+                  ? 'rgba(239,68,68,.5)' : undefined,
+              }}
+              type={showPass ? 'text' : 'password'}
+              placeholder="••••••••"
+              value={usuario.confirmar}
+              onChange={(e) => setUsuario({ ...usuario, confirmar: e.target.value })}
+            />
+            {usuario.confirmar && usuario.confirmar !== usuario.password && (
+              <div style={{ fontSize: 10, color: '#ef4444', marginTop: 4, fontFamily: 'JetBrains Mono' }}>
+                ⚠️ Las contraseñas no coinciden
+              </div>
+            )}
+            {usuario.confirmar && usuario.confirmar === usuario.password && (
+              <div style={{ fontSize: 10, color: '#34d399', marginTop: 4, fontFamily: 'JetBrains Mono' }}>
+                ✓ Contraseñas coinciden
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── SECCIÓN 3: Plan ── */}
+        <div style={{
+          fontSize: 10, color: '#4b5563', fontFamily: 'JetBrains Mono',
+          letterSpacing: 1, marginBottom: 10,
+        }}>PLAN INICIAL</div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 12 }}>
+          {Object.values(PLANES).map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setForm({ ...form, plan: p.id })}
+              style={{
+                padding: '10px 6px', borderRadius: 8, cursor: 'pointer', textAlign: 'center',
+                border: `2px solid ${form.plan === p.id ? p.color : '#2a3045'}`,
+                background: form.plan === p.id ? p.colorBg : 'transparent',
+                transition: 'all .15s',
+              }}
+            >
+              <div style={{ fontSize: 16 }}>{p.emoji}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: form.plan === p.id ? p.color : '#6b7280', marginTop: 3 }}>
+                {p.nombre}
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Duración */}
+        {esFree ? (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', marginBottom: 14,
+            background: 'rgba(52,211,153,.08)', border: '1px solid rgba(52,211,153,.25)', borderRadius: 10,
+            fontSize: 12, color: '#34d399', fontFamily: 'JetBrains Mono',
+          }}>
+            <span style={{ fontSize: 18 }}>🎁</span>
+            <div>
+              <div style={{ fontWeight: 700, marginBottom: 2 }}>Free Trial — 30 días automáticos</div>
+              <div style={{ color: '#4b5563', fontSize: 11 }}>Sin tarjeta · Acceso directo</div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 6 }}>
+              Duración
+            </label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[1, 3, 6, 12].map((m) => (
+                <button key={m} onClick={() => setMeses(m)} style={{
+                  flex: 1, padding: '8px', borderRadius: 8, cursor: 'pointer',
+                  border: `1px solid ${meses === m ? plan.color : '#2a3045'}`,
+                  background: meses === m ? plan.colorBg : 'transparent',
+                  color: meses === m ? plan.color : '#6b7280',
+                  fontFamily: 'JetBrains Mono', fontSize: 13, fontWeight: 700, transition: 'all .15s',
+                }}>{m === 12 ? '1 año' : `${m} mes${m > 1 ? 'es' : ''}`}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Resumen */}
+        <div style={{
+          background: '#0d0f14', border: `1px solid ${plan.colorBorder}`,
+          borderRadius: 10, padding: '12px 14px', marginBottom: 16,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 12, color: '#6b7280' }}>Plan</span>
+            <span style={{ color: plan.color, fontWeight: 700, fontFamily: 'JetBrains Mono' }}>{plan.emoji} {plan.nombre}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 12, color: '#6b7280' }}>Vence el</span>
+            <span style={{ color: '#e8eaf0', fontFamily: 'JetBrains Mono', fontSize: 12 }}>{formatFecha(calcFechaVenc())}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 12, color: '#6b7280' }}>Admin</span>
+            <span style={{ color: '#a78bfa', fontFamily: 'JetBrains Mono', fontSize: 12 }}>
+              👤 {usuario.username || '—'}
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 12, color: '#6b7280' }}>Total</span>
+            <span style={{ color: esFree ? '#34d399' : '#fbbf24', fontWeight: 700, fontFamily: 'JetBrains Mono' }}>
+              {esFree ? '$0.00 — GRATIS' : `$${(plan.precio * meses).toFixed(2)} MXN`}
+            </span>
           </div>
         </div>
 
@@ -368,10 +557,8 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
           <button className="btn ghost" onClick={onClose}>Cancelar</button>
           <button
             className="btn green"
-            onClick={() => {
-              if (!form.nombre.trim()) return alert('El nombre es requerido');
-              onGuardar(form);
-            }}
+            style={{ background: plan.colorBg, border: `1px solid ${plan.colorBorder}`, color: plan.color }}
+            onClick={handleCrear}
           >
             🏢 Crear Empresa
           </button>
@@ -380,7 +567,6 @@ const ModalNuevaEmpresa = ({ onClose, onGuardar }) => {
     </div>
   );
 };
-
 // ══════════════════════════════════════════════════════
 // CARD DE EMPRESA
 // ══════════════════════════════════════════════════════
@@ -623,27 +809,37 @@ const Empresas = () => {
     alert(`✅ Plan ${PLANES[plan].nombre} asignado a "${modalPlan.nombre}" hasta ${formatFecha(fechaVencimiento)}`);
   };
 
-  const handleCrearEmpresa = async (form) => {
-    try {
-      const r = await fetch('/api/empresas', {
-        method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ nombre: form.nombre, propietario: form.propietario, telefono: form.telefono, email: form.email, plan: form.plan, activo: true }),
-      });
-      if (r.ok) {
-        const nueva = await r.json();
-        setEmpresas(prev => [...prev, { ...nueva, plan: form.plan, activo: true }]);
-      } else {
-        // Demo: agregar localmente
-        const id = Math.max(...empresas.map(e => e.id), 0) + 1;
-        setEmpresas(prev => [...prev, { id, ...form, activo: true, fechaVencimiento: null }]);
-      }
-    } catch {
+const handleCrearEmpresa = async (form) => {
+  try {
+    const r = await fetch('/api/empresas', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({
+        nombre: form.nombre,
+        propietario: form.propietario,
+        telefono: form.telefono,
+        email: form.email,
+        plan: form.plan,
+        activo: true,
+        fechaVencimiento: form.fechaVencimiento,
+        // ✅ Datos del admin
+        adminUser: form.adminUser,
+        adminPass: form.adminPass,
+      }),
+    });
+    if (r.ok) {
+      const nueva = await r.json();
+      setEmpresas(prev => [...prev, { ...nueva, plan: form.plan, activo: true }]);
+    } else {
       const id = Math.max(...empresas.map(e => e.id), 0) + 1;
-      setEmpresas(prev => [...prev, { id, ...form, activo: true, fechaVencimiento: null }]);
+      setEmpresas(prev => [...prev, { id, ...form, activo: true }]);
     }
-    setModalNueva(false);
-    alert(`✅ Empresa "${form.nombre}" creada`);
-  };
+  } catch {
+    const id = Math.max(...empresas.map(e => e.id), 0) + 1;
+    setEmpresas(prev => [...prev, { id, ...form, activo: true }]);
+  }
+  setModalNueva(false);
+  alert(`✅ Empresa "${form.nombre}" creada con usuario "${form.adminUser}"`);
+};
 
   // ── Filtros ──
   const empresasFiltradas = empresas.filter(e => {
