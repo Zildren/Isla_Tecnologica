@@ -5,6 +5,15 @@ import { obtenerVentas, registrarVenta, eliminarVenta as deleteVenta } from '../
 import { obtenerGastos, registrarGasto, actualizarGasto, eliminarGasto as deleteGasto } from '../services/gastoService';
 import './Inventario.css';
 
+// ── Configuración del ticket por defecto ──
+const TICKET_DEFAULT = {
+  empresa: 'NOMBRE DE LA EMPRESA',
+  direccion: 'Calle y numero #',
+  ciudad: 'Ciudad, Estado',
+  telefono: 'Número de teléfono',
+  footer: '¡Gracias por su preferencia!',
+};
+
 // ═══════════════════════════════════════════
 // GRÁFICA DE ÁREA SVG
 // ═══════════════════════════════════════════
@@ -314,7 +323,7 @@ const Inventario = () => {
 
   // ── Reportes ──
   const [todasLasVentas, setTodasLasVentas] = useState([]);
-  const [filtro, setFiltro]                = useState('dia');
+  const [filtro, setFiltro]                 = useState('dia');
   const [busquedaFecha, setBusquedaFecha]  = useState(new Date().toISOString().split('T')[0]);
   const [textoBusqueda, setTextoBusqueda]  = useState('');
   const [modalConfirmarEliminar, setModalConfirmarEliminar] = useState(null);
@@ -330,6 +339,16 @@ const Inventario = () => {
   const [listaVenta, setListaVenta] = useState([]);
   const [pago, setPago]             = useState({ efectivo:0, cambio:0 });
   const [ventaExitosa, setVentaExitosa] = useState(null);
+  const [modoVenta, setModoVenta] = useState('inventario'); // 'inventario' | 'libre'
+  const [itemLibre, setItemLibre] = useState({ nombre: '', precio: 0, cantidad: 1, costo: 0 });
+  const [ticketConfig, setTicketConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`ticketConfig_empresa_${localStorage.getItem('empresaId')}`);
+      return saved ? JSON.parse(saved) : TICKET_DEFAULT;
+    } catch { return TICKET_DEFAULT; }
+  });
+  const [modalTicketConfig, setModalTicketConfig] = useState(false);
+  const [ticketTemp, setTicketTemp] = useState(TICKET_DEFAULT);
 
   // ── Usuarios ──
   const [usuarios, setUsuarios]         = useState([]);
@@ -586,51 +605,72 @@ const Inventario = () => {
   };
 
   const agregarALista = () => {
-    if (!seleccion.productoId) return alert('Selecciona un producto');
-    if (seleccion.cantidad > seleccion.stockDisponible) return alert('Stock insuficiente');
-    setListaVenta(prev => [...prev, { ...seleccion }]);
-    setSeleccion({ productoId:'', codigo:'', nombre:'', precio:0, cantidad:1, stockDisponible:0 });
-    setBusquedaVenta('');
+    if (modoVenta === 'inventario') {
+      if (!seleccion.productoId) return alert('Selecciona un producto');
+      if (seleccion.cantidad > seleccion.stockDisponible) return alert('Stock insuficiente');
+      setListaVenta(prev => [...prev, { ...seleccion, esLibre: false }]);
+      setSeleccion({ productoId: '', codigo: '', nombre: '', precio: 0, cantidad: 1, stockDisponible: 0 });
+      setBusquedaVenta('');
+    } else {
+      if (!itemLibre.nombre.trim()) return alert('Escribe el nombre del producto/servicio');
+      if (itemLibre.precio <= 0) return alert('El precio debe ser mayor a 0');
+      if (itemLibre.cantidad <= 0) return alert('La cantidad debe ser mayor a 0');
+      setListaVenta(prev => [...prev, {
+        productoId: null,
+        codigo: 'LIBRE',
+        nombre: itemLibre.nombre.trim(),
+        precio: itemLibre.precio,
+        cantidad: itemLibre.cantidad,
+        costo: itemLibre.costo, // ✅ El costo se guarda pero NO se imprime en ticket
+        stockDisponible: 999,
+        esLibre: true,
+      }]);
+      setItemLibre({ nombre: '', precio: 0, cantidad: 1, costo: 0 });
+    }
   };
 
   const quitarDeLista = (idx) => setListaVenta(prev => prev.filter((_, i) => i !== idx));
 
   const generarTicketPDF = (venta) => {
     import('jspdf').then(({ default: jsPDF }) => {
-      const doc = new jsPDF({ unit:'mm', format:[80, 200] });
+      const doc = new jsPDF({ unit: 'mm', format: [80, 200] });
       const x = 5; let y = 10; const lh = 6;
-      doc.setFontSize(13); doc.setFont('courier','bold');
-      doc.text('ISLA TECNOLÓGICA', 40, y, { align:'center' }); y += lh;
-      doc.setFontSize(8); doc.setFont('courier','normal');
-      doc.text('VNSA Jose A. Pinedo 301', 40, y, { align:'center' }); y += lh - 1;
-      doc.text('Aguascalientes, México', 40, y, { align:'center' }); y += lh;
-      doc.text('449-540-5568', 40, y, { align:'center' }); y += lh;
-      doc.text('--------------------------------', 40, y, { align:'center' }); y += lh;
+  
+      doc.setFontSize(13); doc.setFont('courier', 'bold');
+      doc.text(ticketConfig.empresa, 40, y, { align: 'center' }); y += lh;
+      doc.setFontSize(8); doc.setFont('courier', 'normal');
+      doc.text(ticketConfig.direccion, 40, y, { align: 'center' }); y += lh - 1;
+      doc.text(ticketConfig.ciudad, 40, y, { align: 'center' }); y += lh;
+      doc.text(ticketConfig.telefono, 40, y, { align: 'center' }); y += lh;
+      doc.text('--------------------------------', 40, y, { align: 'center' }); y += lh;
       doc.setFontSize(9);
       doc.text(`Venta: ${venta.id}`, x, y);
-      doc.text(new Date().toLocaleDateString(), 75, y, { align:'right' }); y += lh;
+      doc.text(new Date().toLocaleDateString(), 75, y, { align: 'right' }); y += lh;
       doc.text(`Atendido por: ${venta.vendedorMatricula}`, x, y); y += lh;
-      doc.text('--------------------------------', 40, y, { align:'center' }); y += lh;
+      doc.text('--------------------------------', 40, y, { align: 'center' }); y += lh;
+  
       venta.productos.forEach(item => {
-        doc.setFont('courier','bold');
+        // ✅ Los items libres NO muestran costo, solo nombre y precio
+        doc.setFont('courier', 'bold');
         doc.text(`${item.cantidad} x ${item.nombre}`, x, y); y += lh;
-        doc.setFont('courier','normal');
+        doc.setFont('courier', 'normal');
         doc.text(`$${parseFloat(item.precio).toFixed(2)} c/u`, x, y);
-        doc.text(`$${(item.precio * item.cantidad).toFixed(2)}`, 75, y, { align:'right' }); y += lh;
+        doc.text(`$${(item.precio * item.cantidad).toFixed(2)}`, 75, y, { align: 'right' }); y += lh;
       });
-      doc.text('--------------------------------', 40, y, { align:'center' }); y += lh;
-      doc.setFontSize(11); doc.setFont('courier','bold');
+  
+      doc.text('--------------------------------', 40, y, { align: 'center' }); y += lh;
+      doc.setFontSize(11); doc.setFont('courier', 'bold');
       doc.text('TOTAL:', x, y);
-      doc.text(`MXN $${venta.total.toFixed(2)}`, 75, y, { align:'right' }); y += lh;
-      doc.setFontSize(9); doc.setFont('courier','normal');
+      doc.text(`MXN $${venta.total.toFixed(2)}`, 75, y, { align: 'right' }); y += lh;
+      doc.setFontSize(9); doc.setFont('courier', 'normal');
       doc.text('Efectivo:', x, y);
-      doc.text(`$${parseFloat(venta.efectivo).toFixed(2)}`, 75, y, { align:'right' }); y += lh;
+      doc.text(`$${parseFloat(venta.efectivo).toFixed(2)}`, 75, y, { align: 'right' }); y += lh;
       doc.text('Cambio:', x, y);
-      doc.text(`$${venta.cambio.toFixed(2)}`, 75, y, { align:'right' }); y += lh + 3;
-      doc.text('--------------------------------', 40, y, { align:'center' }); y += lh;
-      doc.text('¡Gracias por su preferencia!', 40, y, { align:'center' }); y += lh;
+      doc.text(`$${venta.cambio.toFixed(2)}`, 75, y, { align: 'right' }); y += lh + 3;
+      doc.text('--------------------------------', 40, y, { align: 'center' }); y += lh;
+      doc.text(ticketConfig.footer, 40, y, { align: 'center' }); y += lh;
       doc.setFontSize(7);
-      doc.text(`${venta.id}-${Math.random().toString(36).substr(2,5)}`, 40, y, { align:'center' });
+      doc.text(`${venta.id}-${Math.random().toString(36).substr(2, 5)}`, 40, y, { align: 'center' });
       doc.save(`ticket-${venta.id}.pdf`);
     });
   };
@@ -638,17 +678,45 @@ const Inventario = () => {
   const handleVenta = async () => {
     if (listaVenta.length === 0) return alert('La lista está vacía');
     if (parseFloat(pago.efectivo) < totalVenta) return alert('❌ Efectivo insuficiente');
+  
     const ventasGuardadas = [];
     for (let item of listaVenta) {
-      const res = await registrarVenta({ codigoProducto:item.codigo, nombreProducto:item.nombre, cantidad:item.cantidad, precioVenta:item.precio, vendedorMatricula:matricula });
-      if (res) ventasGuardadas.push(res);
+      if (item.esLibre) {
+        // ✅ Item libre: registrar como venta sin producto de inventario
+        const res = await registrarVenta({
+          codigoProducto: 'LIBRE',
+          nombreProducto: item.nombre,
+          cantidad: item.cantidad,
+          precioVenta: item.precio,
+          precioCompra: item.costo || 0, // el costo va a reportes, no al ticket
+          vendedorMatricula: matricula,
+        });
+        if (res) ventasGuardadas.push(res);
+      } else {
+        const res = await registrarVenta({
+          codigoProducto: item.codigo,
+          nombreProducto: item.nombre,
+          cantidad: item.cantidad,
+          precioVenta: item.precio,
+          vendedorMatricula: matricula,
+        });
+        if (res) ventasGuardadas.push(res);
+      }
     }
-    const idReal = ventasGuardadas.length > 0 ? ventasGuardadas[0].id : Math.floor(Math.random()*10000);
-    const venta = { id: idReal, productos:listaVenta, total:totalVenta, efectivo:pago.efectivo, cambio:pago.cambio, vendedorMatricula:matricula };
+  
+    const idReal = ventasGuardadas.length > 0 ? ventasGuardadas[0].id : Math.floor(Math.random() * 10000);
+    const venta = {
+      id: idReal,
+      productos: listaVenta,
+      total: totalVenta,
+      efectivo: pago.efectivo,
+      cambio: pago.cambio,
+      vendedorMatricula: matricula,
+    };
     generarTicketPDF(venta);
     setVentaExitosa(venta);
     setListaVenta([]);
-    setPago({ efectivo:0, cambio:0 });
+    setPago({ efectivo: 0, cambio: 0 });
     cargarProductos();
     cargarVentas();
   };
@@ -718,7 +786,7 @@ const Inventario = () => {
                           fv.getFullYear() === fechaRef.getFullYear();
     const coincideTexto =
       (v.vendedorMatricula || '').toLowerCase().includes(textoBusqueda.toLowerCase()) ||
-      (v.nombreProducto   || '').toLowerCase().includes(textoBusqueda.toLowerCase()) ||
+      (v.nombreProducto  || '').toLowerCase().includes(textoBusqueda.toLowerCase()) ||
       (v.clienteNombre    || '').toLowerCase().includes(textoBusqueda.toLowerCase());
     return coincideTiempo && coincideTexto;
   });
@@ -726,7 +794,7 @@ const Inventario = () => {
   const totalVendido  = ventasFiltradas.reduce((s,v) => s + (v.total ?? 0), 0);
   const totalGastos   = ventasFiltradas.reduce((s,v) => {
     if (v.tipo === 'abono') return s + (v.precioCompra ?? 0);          // costo abono (solo si completo)
-    return s + (v.precioCompra ?? 0) * (v.cantidad ?? 0);             // costo venta normal
+    return s + (v.precioCompra ?? 0) * (v.cantidad ?? 0);              // costo venta normal
   }, 0);
   const totalTickets  = ventasFiltradas.length;
 
@@ -1794,121 +1862,216 @@ const Inventario = () => {
             <>
               {ventaExitosa && (
                 <div className="venta-flash" onClick={() => setVentaExitosa(null)}>
-                  ✅ Venta #{ventaExitosa.id} registrada — Ticket descargado · <span style={{opacity:.7}}>Click para cerrar</span>
+                  ✅ Venta #{ventaExitosa.id} registrada — Ticket descargado · <span style={{ opacity: .7 }}>Click para cerrar</span>
                 </div>
               )}
+
+              {/* ✅ Botón configurar ticket (solo admin) */}
+              {esAdmin && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+                  <button className="btn ghost" style={{ fontSize: 12, padding: '7px 14px', display: 'flex', alignItems: 'center', gap: 6 }}
+                    onClick={() => { setTicketTemp({ ...ticketConfig }); setModalTicketConfig(true); }}>
+                    🧾 Configurar Ticket
+                  </button>
+                </div>
+              )}
+
               <div className="ventas-grid">
                 <div className="venta-panel">
                   <div className="venta-section-title">🛍️ Seleccionar Producto</div>
-                  <label className="rep-label" style={{marginBottom:6,display:'block'}}>Buscar producto</label>
-                  <div className="search-wrap" style={{marginBottom:10}}>
-                    <span className="search-icon">🔍</span>
-                    <input className="search-input" placeholder="Nombre o código..." value={busquedaVenta}
-                      onChange={e => { setBusquedaVenta(e.target.value); setSeleccion({productoId:'',codigo:'',nombre:'',precio:0,cantidad:1,stockDisponible:0}); }} />
-                    {busquedaVenta && (
-                      <button onClick={() => { setBusquedaVenta(''); setSeleccion({productoId:'',codigo:'',nombre:'',precio:0,cantidad:1,stockDisponible:0}); }}
-                        style={{position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'#6b7280',cursor:'pointer',fontSize:14,padding:0}}>✕</button>
-                    )}
+
+                  {/* ✅ Toggle Inventario / Producto Libre */}
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 16, background: '#0d0f14', borderRadius: 10, padding: 4, border: '1px solid #1e2230' }}>
+                    <button onClick={() => setModoVenta('inventario')} style={{
+                      flex: 1, padding: '8px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                      fontFamily: 'JetBrains Mono, monospace', border: 'none', transition: 'all .15s',
+                      background: modoVenta === 'inventario' ? 'rgba(79,158,255,.2)' : 'transparent',
+                      color: modoVenta === 'inventario' ? '#4f9eff' : '#6b7280',
+                    }}>📦 Del Inventario</button>
+                    <button onClick={() => setModoVenta('libre')} style={{
+                      flex: 1, padding: '8px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                      fontFamily: 'JetBrains Mono, monospace', border: 'none', transition: 'all .15s',
+                      background: modoVenta === 'libre' ? 'rgba(251,191,36,.2)' : 'transparent',
+                      color: modoVenta === 'libre' ? '#fbbf24' : '#6b7280',
+                    }}>✏️ Producto Libre</button>
                   </div>
-                  <label className="rep-label" style={{marginBottom:6,display:'block'}}>Producto</label>
-                  <select className="inp" style={{width:'100%',marginBottom:14}} value={seleccion.productoId} onChange={seleccionarProducto}>
-                    <option value="">— Selecciona un producto —</option>
-                    {productosFiltradosVenta.map(p => (
-                      <option key={p.id} value={p.id} disabled={p.stock===0}>
-                        {p.nombre} ({p.codigo}){p.stock===0?' — Sin stock':` — Stock: ${p.stock}`}
-                      </option>
-                    ))}
-                  </select>
-                  {seleccion.productoId && (
-                    <div className="prod-seleccionado">
-                      <div style={{fontWeight:600,fontSize:14}}>{seleccion.nombre}</div>
-                      <div style={{display:'flex',gap:20,marginTop:6,fontSize:12,color:'#9ca3af'}}>
-                        <span>Código: <span className="mono" style={{color:'#6b7280'}}>{seleccion.codigo}</span></span>
-                        <span>Stock: <span style={{color:seleccion.stockDisponible<5?'#fbbf24':'#34d399',fontWeight:600}}>{seleccion.stockDisponible}</span></span>
-                        <span>Precio: <span className="mono" style={{color:'#4f9eff',fontWeight:700}}>${seleccion.precio.toFixed(2)}</span></span>
+
+                  {/* ── MODO INVENTARIO ── */}
+                  {modoVenta === 'inventario' && (
+                    <>
+                      <label className="rep-label" style={{ marginBottom: 6, display: 'block' }}>Buscar producto</label>
+                      <div className="search-wrap" style={{ marginBottom: 10 }}>
+                        <span className="search-icon">🔍</span>
+                        <input className="search-input" placeholder="Nombre o código..." value={busquedaVenta}
+                          onChange={e => { setBusquedaVenta(e.target.value); setSeleccion({ productoId: '', codigo: '', nombre: '', precio: 0, cantidad: 1, stockDisponible: 0 }); }} />
+                        {busquedaVenta && (
+                          <button onClick={() => { setBusquedaVenta(''); setSeleccion({ productoId: '', codigo: '', nombre: '', precio: 0, cantidad: 1, stockDisponible: 0 }); }}
+                            style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: 14, padding: 0 }}>✕</button>
+                        )}
                       </div>
-                    </div>
+                      <label className="rep-label" style={{ marginBottom: 6, display: 'block' }}>Producto</label>
+                      <select className="inp" style={{ width: '100%', marginBottom: 14 }} value={seleccion.productoId} onChange={seleccionarProducto}>
+                        <option value="">— Selecciona un producto —</option>
+                        {productosFiltradosVenta.map(p => (
+                          <option key={p.id} value={p.id} disabled={p.stock === 0}>
+                            {p.nombre} ({p.codigo}){p.stock === 0 ? ' — Sin stock' : ` — Stock: ${p.stock}`}
+                          </option>
+                        ))}
+                      </select>
+                      {seleccion.productoId && (
+                        <div className="prod-seleccionado">
+                          <div style={{ fontWeight: 600, fontSize: 14 }}>{seleccion.nombre}</div>
+                          <div style={{ display: 'flex', gap: 20, marginTop: 6, fontSize: 12, color: '#9ca3af' }}>
+                            <span>Código: <span className="mono" style={{ color: '#6b7280' }}>{seleccion.codigo}</span></span>
+                            <span>Stock: <span style={{ color: seleccion.stockDisponible < 5 ? '#fbbf24' : '#34d399', fontWeight: 600 }}>{seleccion.stockDisponible}</span></span>
+                            <span>Precio: <span className="mono" style={{ color: '#4f9eff', fontWeight: 700 }}>${seleccion.precio.toFixed(2)}</span></span>
+                          </div>
+                        </div>
+                      )}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+                        <div>
+                          <label className="rep-label" style={{ marginBottom: 6, display: 'block' }}>Cantidad</label>
+                          <input className="inp" style={{ width: '100%' }} type="number" min="1" max={seleccion.stockDisponible} value={seleccion.cantidad}
+                            onChange={e => setSeleccion({ ...seleccion, cantidad: parseInt(e.target.value) || 1 })} />
+                        </div>
+                        <div>
+                          <label className="rep-label" style={{ marginBottom: 6, display: 'block' }}>Precio unitario $</label>
+                          <input className="inp" style={{ width: '100%', borderColor: 'rgba(79,158,255,.4)' }} type="number" step="0.01" placeholder="0.00"
+                            value={seleccion.precio === 0 ? '' : seleccion.precio}
+                            onChange={e => setSeleccion({ ...seleccion, precio: parseFloat(e.target.value) || 0 })} />
+                        </div>
+                      </div>
+                    </>
                   )}
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
-                    <div>
-                      <label className="rep-label" style={{marginBottom:6,display:'block'}}>Cantidad</label>
-                      <input className="inp" style={{width:'100%'}} type="number" min="1" max={seleccion.stockDisponible} value={seleccion.cantidad}
-                        onChange={e => setSeleccion({...seleccion,cantidad:parseInt(e.target.value)||1})} />
-                    </div>
-                    <div>
-                      <label className="rep-label" style={{marginBottom:6,display:'block'}}>Precio unitario $</label>
-                      <input className="inp" style={{width:'100%',borderColor:'rgba(79,158,255,.4)'}} type="number" step="0.01" placeholder="0.00"
-                        value={seleccion.precio===0?'':seleccion.precio}
-                        onChange={e => setSeleccion({...seleccion,precio:parseFloat(e.target.value)||0})} />
-                    </div>
-                  </div>
-                  <button className="btn green" style={{width:'100%',padding:'13px',fontSize:14,justifyContent:'center'}} onClick={agregarALista}>
+
+                  {/* ── MODO LIBRE ── */}
+                  {modoVenta === 'libre' && (
+                    <>
+                      <div style={{ background: 'rgba(251,191,36,.06)', border: '1px solid rgba(251,191,36,.2)', borderRadius: 10, padding: '14px', marginBottom: 14 }}>
+                        <div style={{ fontSize: 11, color: '#fbbf24', fontFamily: 'JetBrains Mono', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          ✏️ El costo <strong>no aparece en el ticket</strong> — solo en reportes
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          <div>
+                            <label className="rep-label" style={{ marginBottom: 4, display: 'block' }}>Nombre del producto / servicio *</label>
+                            <input className="inp" style={{ width: '100%' }} placeholder="Ej: Servicio de reparación, Cable HDMI..."
+                              value={itemLibre.nombre}
+                              onChange={e => setItemLibre({ ...itemLibre, nombre: e.target.value })} />
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                            <div>
+                              <label className="rep-label" style={{ marginBottom: 4, display: 'block' }}>Cantidad</label>
+                              <input className="inp" style={{ width: '100%' }} type="number" min="1" value={itemLibre.cantidad}
+                                onChange={e => setItemLibre({ ...itemLibre, cantidad: parseInt(e.target.value) || 1 })} />
+                            </div>
+                            <div>
+                              <label className="rep-label" style={{ marginBottom: 4, display: 'block' }}>Precio venta $</label>
+                              <input className="inp" style={{ width: '100%', borderColor: 'rgba(79,158,255,.4)', color: '#4f9eff' }}
+                                type="number" step="0.01" placeholder="0.00"
+                                value={itemLibre.precio === 0 ? '' : itemLibre.precio}
+                                onChange={e => setItemLibre({ ...itemLibre, precio: parseFloat(e.target.value) || 0 })} />
+                            </div>
+                            <div>
+                              <label className="rep-label" style={{ marginBottom: 4, display: 'block' }}>
+                                Costo $ <span style={{ color: '#4b5563', fontSize: 10 }}>(oculto)</span>
+                              </label>
+                              <input className="inp" style={{ width: '100%', borderColor: 'rgba(248,113,113,.3)', color: '#f87171' }}
+                                type="number" step="0.01" placeholder="0.00"
+                                value={itemLibre.costo === 0 ? '' : itemLibre.costo}
+                                onChange={e => setItemLibre({ ...itemLibre, costo: parseFloat(e.target.value) || 0 })} />
+                            </div>
+                          </div>
+                          {itemLibre.nombre && itemLibre.precio > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: '#0d0f14', borderRadius: 8, fontSize: 12, fontFamily: 'JetBrains Mono' }}>
+                              <span style={{ color: '#6b7280' }}>{itemLibre.cantidad} × ${itemLibre.precio.toFixed(2)}</span>
+                              <span style={{ color: '#e8eaf0', fontWeight: 700 }}>= ${(itemLibre.cantidad * itemLibre.precio).toFixed(2)}</span>
+                              {itemLibre.costo > 0 && (
+                                <span style={{ color: '#34d399' }}>
+                                  Gan: +${((itemLibre.precio - itemLibre.costo) * itemLibre.cantidad).toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <button className="btn green" style={{ width: '100%', padding: '13px', fontSize: 14, justifyContent: 'center' }} onClick={agregarALista}>
                     ➕ Añadir a la Venta
                   </button>
-                  <div style={{borderTop:'1px solid #1e2230',marginTop:20,paddingTop:18}}>
-                    <label className="rep-label" style={{marginBottom:6,display:'block'}}>💵 Pago con efectivo</label>
-                    <input className="inp" style={{width:'100%',fontSize:22,fontFamily:'JetBrains Mono',color:'#fbbf24',borderColor:'rgba(251,191,36,.35)'}}
-                      type="number" step="0.01" value={pago.efectivo} onChange={e => setPago({...pago,efectivo:e.target.value})} />
+
+                  <div style={{ borderTop: '1px solid #1e2230', marginTop: 20, paddingTop: 18 }}>
+                    <label className="rep-label" style={{ marginBottom: 6, display: 'block' }}>💵 Pago con efectivo</label>
+                    <input className="inp" style={{ width: '100%', fontSize: 22, fontFamily: 'JetBrains Mono', color: '#fbbf24', borderColor: 'rgba(251,191,36,.35)' }}
+                      type="number" step="0.01" value={pago.efectivo} onChange={e => setPago({ ...pago, efectivo: e.target.value })} />
                     {parseFloat(pago.efectivo) > 0 && (
-                      <div style={{display:'flex',justifyContent:'space-between',marginTop:10,padding:'10px 14px',background:'#0d0f14',borderRadius:8,border:'1px solid #1e2230'}}>
-                        <span style={{fontSize:13,color:'#9ca3af'}}>Cambio:</span>
-                        <span className="mono" style={{fontSize:18,fontWeight:700,color:pago.cambio>=0?'#34d399':'#ef4444'}}>${pago.cambio.toFixed(2)}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, padding: '10px 14px', background: '#0d0f14', borderRadius: 8, border: '1px solid #1e2230' }}>
+                        <span style={{ fontSize: 13, color: '#9ca3af' }}>Cambio:</span>
+                        <span className="mono" style={{ fontSize: 18, fontWeight: 700, color: pago.cambio >= 0 ? '#34d399' : '#ef4444' }}>${pago.cambio.toFixed(2)}</span>
                       </div>
                     )}
-                    <button className="btn green" style={{width:'100%',padding:'15px',fontSize:16,justifyContent:'center',marginTop:14,background:listaVenta.length===0?'#1e2230':'#22c55e',color:listaVenta.length===0?'#4b5563':'#000'}}
-                      onClick={handleVenta} disabled={listaVenta.length===0}>
+                    <button className="btn green" style={{ width: '100%', padding: '15px', fontSize: 16, justifyContent: 'center', marginTop: 14, background: listaVenta.length === 0 ? '#1e2230' : '#22c55e', color: listaVenta.length === 0 ? '#4b5563' : '#000' }}
+                      onClick={handleVenta} disabled={listaVenta.length === 0}>
                       ✅ Cobrar e Imprimir Ticket
                     </button>
                   </div>
                 </div>
+
+                {/* ── TICKET PREVIEW ── */}
                 <div className="venta-panel">
                   <div className="venta-section-title">🧾 Vista Previa del Ticket</div>
                   <div className="ticket-preview">
                     <div className="ticket-header">
-                      <div style={{fontWeight:700,fontSize:15,letterSpacing:1}}>ISLA TECNOLÓGICA</div>
-                      <div style={{fontSize:10,color:'#9ca3af',marginTop:3}}>VNSA Jose A. Pinedo 301</div>
-                      <div style={{fontSize:10,color:'#9ca3af'}}>Aguascalientes, México · 449-540-5568</div>
+                      <div style={{ fontWeight: 700, fontSize: 15, letterSpacing: 1 }}>{ticketConfig.empresa}</div>
+                      <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>{ticketConfig.direccion}</div>
+                      <div style={{ fontSize: 10, color: '#9ca3af' }}>{ticketConfig.ciudad} · {ticketConfig.telefono}</div>
                     </div>
-                    <div className="ticket-divider"/>
-                    <div style={{fontSize:11,color:'#6b7280',display:'flex',justifyContent:'space-between',marginBottom:10}}>
-                      <span>Vendedor: <span style={{color:'#4f9eff'}}>{matricula}</span></span>
+                    <div className="ticket-divider" />
+                    <div style={{ fontSize: 11, color: '#6b7280', display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <span>Vendedor: <span style={{ color: '#4f9eff' }}>{matricula}</span></span>
                       <span>{new Date().toLocaleDateString('es-MX')}</span>
                     </div>
                     {listaVenta.length === 0 ? (
-                      <div style={{textAlign:'center',color:'#374151',fontSize:13,padding:'30px 0'}}>Sin productos aún...</div>
+                      <div style={{ textAlign: 'center', color: '#374151', fontSize: 13, padding: '30px 0' }}>Sin productos aún...</div>
                     ) : listaVenta.map((item, i) => (
                       <div key={i} className="ticket-item">
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                           <div>
-                            <div style={{fontWeight:600,fontSize:13}}>{item.nombre}</div>
-                            <div style={{fontSize:11,color:'#6b7280'}}>{item.cantidad} × ${parseFloat(item.precio).toFixed(2)}</div>
+                            <div style={{ fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                              {item.nombre}
+                              {item.esLibre && (
+                                <span style={{ fontSize: 9, color: '#fbbf24', background: 'rgba(251,191,36,.15)', border: '1px solid rgba(251,191,36,.3)', borderRadius: 4, padding: '1px 5px', fontFamily: 'JetBrains Mono' }}>LIBRE</span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: 11, color: '#6b7280' }}>{item.cantidad} × ${parseFloat(item.precio).toFixed(2)}</div>
                           </div>
-                          <div style={{display:'flex',alignItems:'center',gap:8}}>
-                            <span className="mono" style={{fontWeight:700,color:'#e8eaf0'}}>${(item.precio*item.cantidad).toFixed(2)}</span>
-                            <button className="ico-btn cancel" style={{width:22,height:22,fontSize:11}} onClick={() => quitarDeLista(i)}>✕</button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span className="mono" style={{ fontWeight: 700, color: '#e8eaf0' }}>${(item.precio * item.cantidad).toFixed(2)}</span>
+                            <button className="ico-btn cancel" style={{ width: 22, height: 22, fontSize: 11 }} onClick={() => quitarDeLista(i)}>✕</button>
                           </div>
                         </div>
                       </div>
                     ))}
-                    <div className="ticket-divider"/>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                      <span style={{fontSize:13,color:'#9ca3af',fontWeight:600}}>TOTAL</span>
-                      <span className="mono" style={{fontSize:24,fontWeight:700,color:'#22c55e'}}>${totalVenta.toFixed(2)}</span>
+                    <div className="ticket-divider" />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 13, color: '#9ca3af', fontWeight: 600 }}>TOTAL</span>
+                      <span className="mono" style={{ fontSize: 24, fontWeight: 700, color: '#22c55e' }}>${totalVenta.toFixed(2)}</span>
                     </div>
                     {parseFloat(pago.efectivo) > 0 && (
-                      <div style={{marginTop:10,fontSize:12,color:'#6b7280',display:'flex',flexDirection:'column',gap:4}}>
-                        <div style={{display:'flex',justifyContent:'space-between'}}><span>Efectivo:</span><span className="mono">${parseFloat(pago.efectivo).toFixed(2)}</span></div>
-                        <div style={{display:'flex',justifyContent:'space-between',color:pago.cambio>=0?'#34d399':'#ef4444'}}><span>Cambio:</span><span className="mono" style={{fontWeight:700}}>${pago.cambio.toFixed(2)}</span></div>
+                      <div style={{ marginTop: 10, fontSize: 12, color: '#6b7280', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Efectivo:</span><span className="mono">${parseFloat(pago.efectivo).toFixed(2)}</span></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: pago.cambio >= 0 ? '#34d399' : '#ef4444' }}><span>Cambio:</span><span className="mono" style={{ fontWeight: 700 }}>${pago.cambio.toFixed(2)}</span></div>
                       </div>
                     )}
-                    <div className="ticket-divider"/>
-                    <div style={{textAlign:'center',fontSize:11,color:'#4b5563'}}>¡Gracias por su preferencia!</div>
+                    <div className="ticket-divider" />
+                    <div style={{ textAlign: 'center', fontSize: 11, color: '#4b5563' }}>{ticketConfig.footer}</div>
                   </div>
                   {listaVenta.length > 0 && (
-                    <div style={{marginTop:12,display:'flex',justifyContent:'space-between',fontSize:12,color:'#6b7280'}}>
+                    <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6b7280' }}>
                       <span>{listaVenta.length} producto(s)</span>
-                      <span>{listaVenta.reduce((s,i)=>s+i.cantidad,0)} unidades</span>
-                      <button className="btn ghost" style={{padding:'4px 10px',fontSize:11}} onClick={() => setListaVenta([])}>🗑️ Limpiar</button>
+                      <span>{listaVenta.reduce((s, i) => s + i.cantidad, 0)} unidades</span>
+                      <button className="btn ghost" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setListaVenta([])}>🗑️ Limpiar</button>
                     </div>
                   )}
                 </div>
@@ -2063,6 +2226,61 @@ const Inventario = () => {
             <div className="modal-actions">
               <button className="btn ghost" onClick={() => setModalEliminarGasto(null)}>Cancelar</button>
               <button className="btn red" style={{background:'#ef4444', color:'#fff', fontWeight:700}} onClick={confirmarEliminarGasto}>🗑️ Sí, eliminar gasto</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ══ MODAL CONFIGURAR TICKET (solo admin) ══ */}
+      {modalTicketConfig && esAdmin && (
+        <div className="modal-overlay" onClick={() => setModalTicketConfig(false)}>
+          <div className="modal-box" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-title">🧾 Configurar Ticket de Venta</div>
+            <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 16, fontFamily: 'JetBrains Mono' }}>
+              Esta configuración se guarda por empresa en este dispositivo.
+            </p>
+            {[
+              ['Nombre de la empresa', 'empresa'],
+              ['Dirección', 'direccion'],
+              ['Ciudad / Estado', 'ciudad'],
+              ['Teléfono', 'telefono'],
+              ['Mensaje de cierre', 'footer'],
+            ].map(([label, key]) => (
+              <div key={key} style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 11, color: '#6b7280', fontFamily: 'JetBrains Mono', display: 'block', marginBottom: 4 }}>{label}</label>
+                <input className="inp" style={{ width: '100%' }}
+                  value={ticketTemp[key]}
+                  onChange={e => setTicketTemp({ ...ticketTemp, [key]: e.target.value })}
+                  placeholder={TICKET_DEFAULT[key]} />
+              </div>
+            ))}
+
+            {/* Preview mini */}
+            <div style={{ background: '#0d0f14', border: '1px solid #1e2230', borderRadius: 10, padding: '14px', marginBottom: 16, fontFamily: 'JetBrains Mono', fontSize: 11 }}>
+              <div style={{ textAlign: 'center', marginBottom: 6 }}>
+                <div style={{ fontWeight: 700, fontSize: 13, color: '#e8eaf0' }}>{ticketTemp.empresa || TICKET_DEFAULT.empresa}</div>
+                <div style={{ color: '#6b7280' }}>{ticketTemp.direccion || TICKET_DEFAULT.direccion}</div>
+                <div style={{ color: '#6b7280' }}>{ticketTemp.ciudad || TICKET_DEFAULT.ciudad} · {ticketTemp.telefono || TICKET_DEFAULT.telefono}</div>
+                <div style={{ borderTop: '1px dashed #2a3045', margin: '8px 0' }} />
+                <div style={{ color: '#4b5563' }}>{ticketTemp.footer || TICKET_DEFAULT.footer}</div>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn ghost" onClick={() => { setTicketTemp(TICKET_DEFAULT); }}>↺ Restaurar default</button>
+              <button className="btn ghost" onClick={() => setModalTicketConfig(false)}>Cancelar</button>
+              <button className="btn green" onClick={() => {
+                const cfg = {
+                  empresa: ticketTemp.empresa || TICKET_DEFAULT.empresa,
+                  direccion: ticketTemp.direccion || TICKET_DEFAULT.direccion,
+                  ciudad: ticketTemp.ciudad || TICKET_DEFAULT.ciudad,
+                  telefono: ticketTemp.telefono || TICKET_DEFAULT.telefono,
+                  footer: ticketTemp.footer || TICKET_DEFAULT.footer,
+                };
+                setTicketConfig(cfg);
+                localStorage.setItem(`ticketConfig_empresa_${empresaId}`, JSON.stringify(cfg));
+                setModalTicketConfig(false);
+                alert('✅ Configuración del ticket guardada');
+              }}>💾 Guardar</button>
             </div>
           </div>
         </div>
