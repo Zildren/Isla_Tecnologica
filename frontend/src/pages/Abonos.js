@@ -350,7 +350,7 @@ const Abonos = () => {
             <img src="/logo.png" alt="logo" />
             {!collapsed && (
               <div className="sb-logo-text">
-                <div className="sb-logo-name">Isla Tecnológica</div>
+                <div className="sb-logo-name">Puerto Central</div>
                 <div className="sb-logo-sub">Sistema POS</div>
               </div>
             )}

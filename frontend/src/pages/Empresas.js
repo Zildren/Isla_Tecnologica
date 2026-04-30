@@ -722,7 +722,7 @@ const Empresas = () => {
           <div className="sb-logo">
             <img src="/logo.png" alt="logo" />
             <div className="sb-logo-text">
-              <div className="sb-logo-name">Isla Tecnológica</div>
+              <div className="sb-logo-name">Puerto Central</div>
               <div className="sb-logo-sub">Admin Global</div>
             </div>
           </div>
