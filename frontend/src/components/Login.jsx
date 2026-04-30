@@ -83,7 +83,7 @@ const Login = () => {
                 </div>
 
                 <h1 className="brand-title">
-                    Isla<br /><span>Tecnológica</span>
+                    Puerto<br /><span>Central</span>
                 </h1>
                 <p className="brand-sub">Accede con tus credenciales</p>
 
@@ -194,7 +194,7 @@ const Login = () => {
                     </button>
                 </form>
 
-                <p className="login-footer">© 2026 · Isla Tecnológica · v3.0</p>
+                <p className="login-footer">© 2026 · Puerto Central · v2.0</p>
             </div>
         </div>
     );
