@@ -11,8 +11,14 @@
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%; /* Evita que Safari ajuste el texto automáticamente */
+}
+
 body {
   background: #0d0f14;
+  overscroll-behavior: none; /* Evita el efecto de rebote en iOS/Android */
 }
 
 /* ══════════════════════════════════════
@@ -21,6 +27,7 @@ body {
 .app-shell {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh; /* dynamic viewport height — fix para móviles con barra de navegador */
   font-family: 'Sora', sans-serif;
   color: #e8eaf0;
   background: #0d0f14;
@@ -41,7 +48,7 @@ body {
   left: 0;
   bottom: 0;
   z-index: 100;
-  transition: width 0.25s ease;
+  transition: width 0.25s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar.collapsed {
@@ -146,7 +153,14 @@ body {
   padding: 12px 10px;
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+  scrollbar-width: thin;
+  scrollbar-color: #1e2230 transparent;
 }
+
+.sb-nav::-webkit-scrollbar { width: 4px; }
+.sb-nav::-webkit-scrollbar-track { background: transparent; }
+.sb-nav::-webkit-scrollbar-thumb { background: #1e2230; border-radius: 4px; }
 
 .sb-section-label {
   font-size: 10px;
@@ -177,6 +191,8 @@ body {
   white-space: nowrap;
   overflow: hidden;
   transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent; /* Elimina el flash azul en Android */
+  touch-action: manipulation; /* Elimina el delay de 300ms en mobile */
 }
 
 .sb-item:hover {
@@ -255,6 +271,90 @@ body {
 }
 
 /* ══════════════════════════════════════
+   OVERLAY para menú móvil
+══════════════════════════════════════ */
+.sb-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 99;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sb-overlay.visible {
+  opacity: 1;
+}
+
+/* ══════════════════════════════════════
+   TOPBAR MÓVIL (hamburger)
+══════════════════════════════════════ */
+.mobile-topbar {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 98;
+  height: 58px;
+  background: #0b0d12;
+  border-bottom: 1px solid #1a1d28;
+  padding: 0 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mobile-topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mobile-topbar-logo img {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.mobile-topbar-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e8eaf0;
+}
+
+.mobile-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hamburger-btn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #1e2230;
+  border-radius: 8px;
+  background: #131720;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background 0.15s, color 0.15s;
+}
+
+.hamburger-btn:hover,
+.hamburger-btn:active {
+  background: #1e2230;
+  color: #e8eaf0;
+}
+
+/* ══════════════════════════════════════
    CONTENIDO PRINCIPAL
 ══════════════════════════════════════ */
 .main-content {
@@ -305,11 +405,19 @@ body {
   cursor: pointer;
   transition: all 0.18s;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 .btn:hover {
   filter: brightness(1.1);
   transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+  filter: brightness(0.95);
 }
 
 .btn.green  { background: #22c55e; color: #000; }
@@ -326,7 +434,14 @@ body {
   gap: 4px;
   margin-bottom: 22px;
   border-bottom: 1px solid #1e2230;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
 }
+
+.tabs::-webkit-scrollbar { display: none; }
 
 .tab-btn {
   padding: 10px 20px;
@@ -340,6 +455,10 @@ body {
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .tab-btn.active {
@@ -405,6 +524,12 @@ body {
   font-family: 'Sora', sans-serif;
   font-size: 13px;
   transition: border-color 0.2s;
+  /* Evitar zoom automático en iOS al hacer focus (font-size >= 16px) */
+  font-size: max(13px, 16px);
+}
+
+@media (min-width: 480px) {
+  .search-input { font-size: 13px; }
 }
 
 .search-input:focus {
@@ -460,8 +585,14 @@ body {
   border-radius: 8px;
   color: #e8eaf0;
   font-family: 'Sora', sans-serif;
-  font-size: 13px;
+  font-size: max(13px, 16px); /* Previene zoom en iOS */
   transition: border-color 0.18s;
+  -webkit-appearance: none; /* Normaliza en iOS */
+  appearance: none;
+}
+
+@media (min-width: 480px) {
+  .inp { font-size: 13px; }
 }
 
 .inp:focus {
@@ -485,6 +616,7 @@ body {
   overflow-x: auto;
   border-radius: 12px;
   border: 1px solid #1e2230;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tbl {
@@ -581,8 +713,8 @@ body {
 }
 
 .ico-btn {
-  width: 26px;
-  height: 26px;
+  width: 32px;  /* Aumentado para touch */
+  height: 32px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -591,6 +723,8 @@ body {
   justify-content: center;
   font-size: 13px;
   transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .ico-btn.save            { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
@@ -693,6 +827,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 16px; /* Evita que el modal toque los bordes en móvil */
 }
 
 .modal-box {
@@ -701,7 +836,7 @@ body {
   border-radius: 16px;
   padding: 26px;
   width: 350px;
-  max-width: 92vw;
+  max-width: 100%; /* Limitado al 100% del padding del overlay */
 }
 
 .modal-title {
@@ -748,6 +883,7 @@ body {
   flex-direction: column;
   gap: 6px;
   min-width: 140px;
+  flex: 1;
 }
 
 .rep-label {
@@ -840,15 +976,12 @@ body {
   margin-bottom: 26px;
 }
 
-@media (max-width: 900px) {
-  .charts-grid { grid-template-columns: 1fr; }
-}
-
 .chart-card {
   background: #131720;
   border: 1px solid #1e2230;
   border-radius: 14px;
   padding: 20px 20px 14px;
+  min-width: 0; /* Permite que recharts se reduzca dentro del grid */
 }
 
 .chart-title {
@@ -882,10 +1015,6 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 18px;
   align-items: start;
-}
-
-@media (max-width: 860px) {
-  .ventas-grid { grid-template-columns: 1fr; }
 }
 
 .venta-panel {
@@ -984,6 +1113,8 @@ body {
   cursor: pointer;
   transition: all .15s;
   font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .cat-filtro-btn:hover  { border-color: #4f9eff44; color: #c9d1e0; }
 .cat-filtro-btn.active { background: rgba(79,158,255,.12); border-color: rgba(79,158,255,.4); color: #4f9eff; font-weight: 600; }
@@ -1063,6 +1194,7 @@ body {
   padding: 3px 8px;
   border-radius: 8px;
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 /* Info */
@@ -1102,90 +1234,162 @@ body {
   font-weight: 400;
 }
 
+
 /* ══════════════════════════════════════
-   SOPORTE RESPONSIVE (MÓVILES Y TABLETS)
+   ★ RESPONSIVE COMPLETO
+   Breakpoints:
+   - xl:  > 1280px  → Desktop grande
+   - lg:  1024-1280 → Desktop / laptop
+   - md:  768-1024  → Tablet
+   - sm:  480-768   → Móvil grande / phablet
+   - xs:  < 480px   → Móvil pequeño
 ══════════════════════════════════════ */
 
-/* 1. Tablets y Laptops Pequeñas (Menos de 1024px) */
-@media (max-width: 1024px) {
-  .sidebar {
-    width: 68px; /* Colapsamos la sidebar por defecto */
-  }
-  .main-content {
-    margin-left: 68px;
-    padding: 20px;
-  }
-  .sidebar:hover {
-    width: 240px; /* Se expande al pasar el mouse */
-    box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+/* ── 1. LAPTOP / ESCRITORIO ≤1280px ── */
+@media (max-width: 1280px) {
+  .charts-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
   }
 }
 
-/* 2. Dispositivos Móviles (Menos de 768px) */
-@media (max-width: 768px) {
-  .app-shell {
-    flex-direction: column; /* Cambiamos a disposición vertical */
-  }
-
-  /* Sidebar se convierte en barra superior o menú lateral oculto */
+/* ── 2. TABLETS ≤1024px ── */
+@media (max-width: 1024px) {
+  /* Sidebar se auto-colapsa; al hacer hover se expande (nice-to-have desktop/tablet) */
   .sidebar {
-    width: 100%;
-    height: 64px;
-    min-width: 100%;
-    position: sticky;
-    flex-direction: row;
-    border-right: none;
-    border-bottom: 1px solid #1a1d28;
-    padding: 0 15px;
-    align-items: center;
-    justify-content: space-between;
+    width: 68px;
+    min-width: 68px;
+    box-shadow: none;
   }
 
-  .sb-logo {
-    border-bottom: none;
-    padding: 0;
-    min-height: auto;
+  .sidebar:not(.mobile-open):hover {
+    width: 240px;
+    box-shadow: 6px 0 40px rgba(0, 0, 0, 0.5);
+    z-index: 110;
   }
 
-  /* Ocultamos elementos que no caben en la barra superior móvil */
-  .sb-user, .sb-nav, .sb-section-label, .sb-bottom, .sb-collapse {
-    display: none; 
+  .main-content,
+  .main-content.collapsed {
+    margin-left: 68px;
+    padding: 22px 24px;
   }
 
-  /* El contenido principal ya no tiene margen izquierdo */
-  .main-content, .main-content.collapsed {
+  /* Ocultamos textos en sidebar cuando está colapsada */
+  .sidebar:not(:hover) .sb-label,
+  .sidebar:not(:hover) .sb-logo-text,
+  .sidebar:not(:hover) .sb-user-info,
+  .sidebar:not(:hover) .sb-section-label,
+  .sidebar:not(:hover) .sb-badge {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ventas-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── 3. MÓVILES (< 768px) ── */
+@media (max-width: 768px) {
+  /* 3a. Mostramos la topbar móvil y ocultamos el sidebar fijo */
+  .mobile-topbar {
+    display: flex;
+  }
+
+  /* 3b. El sidebar se convierte en drawer lateral */
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+    top: 0;
+    transform: translateX(-100%);
+    box-shadow: none;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Cuando está abierto desde el botón hamburguesa */
+  .sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 12px 0 60px rgba(0, 0, 0, 0.7);
+  }
+
+  /* Mostramos overlay oscuro detrás del drawer */
+  .sb-overlay {
+    display: block;
+  }
+
+  /* Reactivamos todos los elementos del sidebar */
+  .sb-label, .sb-logo-text, .sb-user-info,
+  .sb-section-label, .sb-badge {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  /* El hover no aplica en móvil */
+  .sidebar:not(.mobile-open):hover {
+    width: 280px;
+    box-shadow: none;
+  }
+
+  /* 3c. Contenido principal ocupa todo el ancho */
+  .main-content,
+  .main-content.collapsed {
     margin-left: 0;
     padding: 16px;
   }
 
-  /* Ajuste de Grillas (Stats y Reportes) */
-  .stats-grid {
-    grid-template-columns: 1fr 1fr; /* 2 columnas en móvil */
-  }
-
-  .rep-kpi-grid {
-    grid-template-columns: 1fr; /* 1 columna para KPIs importantes */
-  }
-
-  /* Topbar se vuelve vertical */
+  /* 3d. Topbar de sección */
   .topbar {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    margin-bottom: 18px;
   }
 
-  /* Formularios: los inputs ocupan todo el ancho */
+  .topbar-title {
+    font-size: 20px;
+  }
+
+  /* 3e. Stats: 2 columnas */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .stat-val {
+    font-size: 18px;
+  }
+
+  /* 3f. KPIs de reporte: 2 columnas */
+  .rep-kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .rep-kpi-value { font-size: 20px; }
+
+  /* 3g. Charts: 1 columna */
+  .charts-grid { grid-template-columns: 1fr; }
+
+  /* 3h. Ventas: 1 columna */
+  .ventas-grid { grid-template-columns: 1fr; }
+
+  /* 3i. Formulario */
   .prod-form-grid {
     flex-direction: column;
   }
-  
+
   .inp.flex1 {
     width: 100%;
+    min-width: unset;
   }
 
-  /* Catálogo: ajustamos el tamaño de las tarjetas */
+  /* 3j. Catálogo: cards más compactas */
   .cat-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
     gap: 10px;
   }
 
@@ -1194,38 +1398,244 @@ body {
     min-height: auto;
   }
 
-  .cat-precio {
-    font-size: 16px;
+  .cat-precio { font-size: 16px; }
+
+  .cat-img-placeholder { font-size: 36px; }
+
+  /* 3k. Tabla: indicador de scroll horizontal */
+  .tbl-wrap {
+    border-radius: 10px;
+    position: relative;
+  }
+
+  .tbl-wrap::after {
+    content: '← scroll →';
+    display: block;
+    text-align: center;
+    font-size: 10px;
+    color: #374151;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 6px;
+    background: #0d0f14;
+    border-top: 1px solid #1e2230;
+  }
+
+  /* 3l. Filtros de reportes: apilados */
+  .rep-filtros {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .rep-filtro-item {
+    min-width: unset;
+    width: 100%;
+  }
+
+  /* 3m. Costos */
+  .costos-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .costo-value { font-size: 20px; }
+
+  /* 3n. Modal: siempre bottom en móvil */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-box {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px 32px; /* extra bottom padding por safe-area */
+    padding-bottom: max(32px, env(safe-area-inset-bottom, 32px));
   }
 }
 
-/* 3. Ajustes para Móviles Muy Pequeños (Menos de 480px) */
+/* ── 4. MÓVILES PEQUEÑOS (< 480px) ── */
 @media (max-width: 480px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
+  .main-content { padding: 12px; }
 
-  .topbar-title {
-    font-size: 18px;
-  }
+  /* Stats: 1 columna */
+  .stats-grid { grid-template-columns: 1fr; }
 
-  .btn {
-    width: 100%; /* Botones de acción ocupan todo el ancho */
+  /* KPIs: 1 columna */
+  .rep-kpi-grid { grid-template-columns: 1fr; }
+
+  /* Costos: 1 columna */
+  .costos-grid { grid-template-columns: 1fr; }
+
+  .topbar-title { font-size: 17px; }
+
+  /* Botones de la topbar ocupan todo el ancho */
+  .topbar .btn {
+    width: 100%;
     justify-content: center;
   }
 
-  /* Hacemos la tabla scrolleable horizontalmente pero con aviso visual */
+  /* Tabla sin bordes laterales, ocupa toda la pantalla */
   .tbl-wrap {
-    margin: 0 -16px; /* Pegamos la tabla a los bordes */
+    margin: 0 -12px;
     border-radius: 0;
     border-left: none;
     border-right: none;
   }
+
+  /* Catálogo */
+  .cat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .cat-info { padding: 10px; }
+  .cat-codigo { font-size: 9px; }
+
+  /* Tabs: scroll horizontal compacto */
+  .tabs {
+    gap: 0;
+  }
+
+  .tab-btn {
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  /* Ocultar texto del hint de scroll en tablas muy pequeñas */
+  .tbl-wrap::after {
+    font-size: 9px;
+  }
 }
 
-/* 4. Optimización de Inputs para Touch */
+/* ── 5. MÓVILES MUY PEQUEÑOS (< 360px) ── */
+@media (max-width: 360px) {
+  .main-content { padding: 10px; }
+
+  .topbar-title { font-size: 15px; }
+
+  .stat-val { font-size: 16px; }
+
+  .rep-kpi-value { font-size: 18px; }
+
+  .cat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .cat-nombre { font-size: 10px; }
+  .cat-precio { font-size: 14px; }
+}
+
+/* ── 6. DISPOSITIVOS TÁCTILES (touch targets) ── */
 @media (pointer: coarse) {
-  .sb-item, .btn, .inp, .tab-btn {
-    min-height: 44px; /* Tamaño mínimo recomendado por Apple/Google para dedos */
+  /* Áreas de toque mínimas recomendadas por WCAG: 44×44px */
+  .sb-item {
+    min-height: 48px;
+  }
+
+  .btn {
+    min-height: 46px;
+    padding: 10px 18px;
+  }
+
+  .inp,
+  .search-input {
+    min-height: 46px;
+  }
+
+  .tab-btn {
+    min-height: 44px;
+  }
+
+  .ico-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .cat-filtro-btn {
+    padding: 9px 16px;
+    min-height: 40px;
+  }
+
+  /* Sin hover transform en touch (evita que quede "pegado") */
+  .cat-card:hover { transform: none; }
+  .rep-kpi-card:hover { transform: none; }
+  .btn:hover { transform: none; }
+}
+
+/* ── 7. LANDSCAPE EN MÓVILES (ej: 667×375) ── */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* La sidebar drawer ocupa menos ancho en landscape */
+  .sidebar {
+    width: 220px;
+  }
+
+  /* Más compactos en landscape */
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .rep-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Modal vuelve al centro en landscape */
+  .modal-overlay {
+    align-items: center;
+    padding: 16px;
+  }
+
+  .modal-box {
+    border-radius: 16px;
+    width: 400px;
+    max-width: 90vw;
+    padding: 22px;
+  }
+}
+
+/* ── 8. SOPORTE PARA NOTCH / SAFE AREAS (iPhone X+, Android) ── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .mobile-topbar {
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+
+  .sidebar {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Cuando la sidebar es un drawer de pantalla completa en móvil */
+  @media (max-width: 768px) {
+    .sidebar {
+      padding-left: env(safe-area-inset-left);
+    }
+  }
+}
+
+/* ── 9. MODO OSCURO DEL SISTEMA (ya nativo, pero refuerza) ── */
+@media (prefers-color-scheme: dark) {
+  /* El diseño ya es oscuro; aquí se pueden añadir overrides adicionales */
+}
+
+/* ── 10. REDUCCIÓN DE MOVIMIENTO (accesibilidad) ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── 11. PANTALLAS DE ALTA DENSIDAD (Retina / HiDPI) ── */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Bordes de 0.5px para una nitidez perfecta en Retina */
+  .tbl th,
+  .tbl td,
+  .sidebar {
+    border-width: 0.5px;
   }
 }
